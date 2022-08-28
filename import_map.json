@@ -1,0 +1,13 @@
+{
+  "imports": {
+    "preact": "https://cdn.skypack.dev/preact@10.10.5",
+    "preact/jsx-runtime": "https://cdn.skypack.dev/preact@10.10.5/jsx-runtime?dts",
+    "preact/jsx-dev-runtime": "https://cdn.skypack.dev/preact@10.10.5/jsx-dev-runtime?dts",
+    "preact-render-to-string": "https://cdn.skypack.dev/preact-render-to-string@v5.1.12",
+
+    "oak": "https://deno.land/x/oak@v11.1.0/mod.ts",
+    "linke-dom": "https://esm.sh/linkedom",
+
+    "fs": "https://deno.land/std@0.153.0/fs/mod.ts"
+  }
+}
