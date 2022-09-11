@@ -1,4 +1,5 @@
 {
+  "deno.path": "/home/sam/.deno/bin/deno",
   "deno.enable": true,
   "deno.unstable": true
 }
