@@ -1,0 +1,3 @@
+[submodule "routerGenerator"]
+	path = routerGenerator
+	url = git@github.com:notsamecGG/Routes-Scanner.git
