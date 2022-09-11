@@ -1,80 +1,59 @@
-import { PutCommand, GetCommand, UpdateCommand, DeleteCommand } from "https://cdn.skypack.dev/-/@aws-sdk/lib-dynamodb@v3.137.0-Udk1RUDeq4xYHh3qsptK/dist=es2019,mode=types/dist-types/commands.d.ts";
-import {dbClient, ExecuteStatementCommand } from "./init.ts";
+import { Table, DynamoDatabase } from "./dynamodb.ts";
+import { Image, Playlist, User } from "./types.ts";
 
-class Table
+
+class Users extends Table
 {
-    name: string;
-    constructor(name: string)
+    constructor(database: DynamoDatabase)
     {
-        this.name = name;
+        super("Users", database);
     }
 
-    async getItem(id: string)
+    get(query: {id: string})
     {
-        const params = {
-            TableName: this.name,
-            Key: {
-                primaryKey: id,
-            }
-        };
-
-        try
-        {
-            const data = await dbClient.send(new GetCommand(params));
-            return data;
-        }
-        catch (err)
-        {
-            console.log(err);
-            throw err;
-        }
     }
 
-    async insertItem(id: string, data: Record<string, unknown>)
+    getToken(query: {userId: string, hash: string})
     {
-        const params = {
-            TableName: this.name,
-            Item: {
-                primaryKey: id,
-                ...data
-            },
-        };
-
-        try
-        {
-            const data = await dbClient.send(new PutCommand(params));
-            return data;
-        }
-        catch (err)
-        {
-            console.log(err);
-            throw err;
-        }
     }
 
-    async updateItem()
+    insert(query: {id: string, name: string, password: string, email: string, playlists: Array<Playlist>, liked: Array<string>, cover: Array<Image>})
     {
+        const user: User = {
+            id: query.id,
+            name: query.name,
+            password: query.password,
+            ips: {},
+            playlists: query.playlists,
+            likes: query.liked,
+            superLikes: [],
+            cover: query.cover,
+            contact: {email: query.email, prefered: "email"} 
+        }
         
-    }
-
-    async deleteItem(id: string)
-    {
+        // const params: ExecuteStatementCommandInput = {
+        //     Statement: `INSERT INTO ${this.name} value {'id': ?, 'name': ?, 'password': ?, 'ips': ?, 'playlists': ?, 'likes': ?, 'superLikes': ?, 'cover': ?, 'contact': ?}`,
+        //     Parameters: [{S: user.id}, {S: user.name}, {S: user.password}, {M: user.ips}, {L: user.playlists}, {L: user.likes}, {L: user.superLikes}, {L: user.cover}, {M: user.cover}]
+        // }
+        // this.database.executeStatement(params);
+        
         const params = {
             TableName: this.name,
-            Key: {
-                primaryKey: id
-            }
-        };
+            Item: user
+        }
 
-        try
-        {
-            const data = await dbClient.send(new DeleteCommand(params));
-            return data;
-        }
-        catch (err)
-        {
-            console.log(err);
-            throw err;
-        }
+        this.putCmd(params);
+    }
+
+    insertToken(query: {ip: string, token: string})
+    {
+    }
+
+    update(query: {}) 
+    {
+    }
+
+    delete(query: {id: string})
+    {
     }
 }

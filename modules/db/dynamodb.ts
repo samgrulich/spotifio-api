@@ -1,14 +1,20 @@
+// deno-lint-ignore-file
+// deno-lint-ignore-file ban-types
+
 // Create the DynamoDB service client module using ES6 syntax.
 import { DynamoDBClient, 
-  ExecuteStatementCommand, ExecuteStatementCommandInput } from "@aws-sdk/client-dynamodb?dts";
+  ExecuteStatementCommand, ExecuteStatementCommandInput} from "@aws-sdk/client-dynamodb?dts";
 
-// import { Database } from "../types.ts";
+import { DynamoDBDocumentClient, 
+  PutCommand, GetCommand, UpdateCommand, DeleteCommand, 
+  PutCommandInput, GetCommandInput, UpdateCommandInput, DeleteCommandInput } from "@aws-sdk/lib-dynamodb?dts";
 
 
 class DynamoSetup
 {
   region: string; 
   client: DynamoDBClient;
+  documentClient: DynamoDBDocumentClient;
 
   constructor(region="")
   {
@@ -17,6 +23,7 @@ class DynamoSetup
 
     this.region = region;
     this.client = this.createClient(region);
+    this.documentClient = this.createDocumentClient();
   }
   
   createClient(region: string)
@@ -39,30 +46,131 @@ class DynamoSetup
     const ddbClient = new DynamoDBClient({ region, credentials });
     return ddbClient;
   }
+
+  createDocumentClient()
+  {
+    const marshallOptions = {
+      // Whether to automatically convert empty strings, blobs, and sets to `null`.
+      convertEmptyValues: false, // false, by default.
+      // Whether to remove undefined values while marshalling.
+      removeUndefinedValues: false, // false, by default.
+      // Whether to convert typeof object to map attribute.
+      convertClassInstanceToMap: false, // false, by default.
+    };
+
+    const unmarshallOptions = {
+      // Whether to return numbers as a string instead of converting them to native JavaScript numbers.
+      wrapNumbers: false, // false, by default.
+    };
+
+    const translateConfig = { marshallOptions, unmarshallOptions };
+
+    // Create the DynamoDB document client.
+    const ddbDocClient = DynamoDBDocumentClient.from(this.client, translateConfig);
+    return ddbDocClient;
+  }
 }
 
 
 export class DynamoDatabase 
 {
   client: DynamoDBClient;
+  documentClient: DynamoDBDocumentClient;
   tableName: string;
 
   constructor(region: string, tableName: string)
   {
     const setup = new DynamoSetup(region);
     
-    this.client = setup.client; 
+    this.client = setup.client;
+    this.documentClient = setup.documentClient;
+
     this.tableName = tableName;
   }
 
-  async run(params: ExecuteStatementCommandInput)
+  async executeStatement(params: ExecuteStatementCommandInput)
   {
     try {
-      await this.client.send(new ExecuteStatementCommand(params));
-      // console.log("Success. Item added.");
-      return "Run successfully"; // For unit tests.
+      const data = await this.documentClient.send(new ExecuteStatementCommand(params));
+      
+      if (data)
+        return {state: 200, data: data.Items}
+
+      return {state: 200}// For unit tests.
     } catch (err) {
       console.error(err);
+    }
+  }
+}
+
+export class Table 
+{
+  name: string;
+  database: DynamoDatabase;
+
+  constructor(name: string, database: DynamoDatabase)
+  {
+    this.name = name;
+    this.database = database;
+  }
+
+  get(query: Object): any | Promise<any>
+  {
+  }
+
+  insert(query: Object): any | Promise<any>
+  {
+  }
+
+  update(query: Object): any | Promise<any>
+  {
+  }
+
+  delete(query: Object): any | Promise<any>
+  {
+  }
+
+  async putCmd(params: PutCommandInput)
+  {
+    try {
+      const data = await this.database.documentClient.send(new PutCommand(params));
+      // console.log("Success - item added or updated", data);
+      // return {status: 200, data};
+    } catch (err) {
+      console.log("Error", err);
+    }
+  }
+
+  async getCmd(params: GetCommandInput)
+  {
+    try {
+      const data = await this.database.documentClient.send(new GetCommand(params));
+      // console.log("Success :", data.Item);
+      return {status: 200, data: data.Item}
+    } catch (err) {
+      console.log("Error", err);
+    }
+  }
+
+  async updateCmd(params: UpdateCommandInput)
+  {
+    try {
+      const data = await this.database.documentClient.send(new UpdateCommand(params));
+      // console.log("Success - item added or updated", data);
+      // return data;
+    } catch (err) {
+      console.log("Error", err);
+    }
+  }
+
+  async deleteCmd(params: DeleteCommandInput)
+  {
+    try {
+      const data = await this.database.documentClient.send(new DeleteCommand(params));
+      // console.log("Success - item added or updated", data);
+      // return data;
+    } catch (err) {
+      console.log("Error", err);
     }
   }
 }
