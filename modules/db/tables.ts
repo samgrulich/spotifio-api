@@ -1,28 +1,51 @@
+// deno-lint-ignore-file no-explicit-any
 import { Table, DynamoDatabase } from "./dynamodb.ts";
 import { Image, Playlist, User } from "./types.ts";
+import { GetCommandInput, UpdateCommandInput } from "@aws-sdk/lib-dynamodb?dts";
 
 
-class Users extends Table
+export class Users extends Table
 {
     constructor(database: DynamoDatabase)
     {
         super("Users", database);
     }
 
-    get(query: {id: string})
+    async get(query: {id: string}): Promise<User>
     {
+        const params = {
+            TableName: this.name,
+            Key: {
+                primaryKey: query.id,
+            }
+        }
+
+        const data = await super.getCmd(params);
+        const user = data?.data as User;
+        
+        return user;
     }
 
-    getToken(query: {userId: string, hash: string})
+    async getToken(query: {userId: string, ip: string})
     {
+        const params: GetCommandInput = {
+            TableName: this.name,
+            Key: {
+                primaryKey: query.userId,
+            },
+            ProjectionExpression: `ips.${query.ip}` 
+        }
+
+        const data = await this.getCmd(params);
+        const status = data?.status;
+        return status; 
     }
 
-    insert(query: {id: string, name: string, password: string, email: string, playlists: Array<Playlist>, liked: Array<string>, cover: Array<Image>})
+    async insert(query: {id: string, name: string, password: string, email: string, playlists: Array<Playlist>, liked: Array<string>, cover: Array<Image>})
     {
         const user: User = {
             id: query.id,
-            name: query.name,
-            password: query.password,
+            name: query.name, password: query.password,
             ips: {},
             playlists: query.playlists,
             likes: query.liked,
@@ -31,29 +54,68 @@ class Users extends Table
             contact: {email: query.email, prefered: "email"} 
         }
         
-        // const params: ExecuteStatementCommandInput = {
-        //     Statement: `INSERT INTO ${this.name} value {'id': ?, 'name': ?, 'password': ?, 'ips': ?, 'playlists': ?, 'likes': ?, 'superLikes': ?, 'cover': ?, 'contact': ?}`,
-        //     Parameters: [{S: user.id}, {S: user.name}, {S: user.password}, {M: user.ips}, {L: user.playlists}, {L: user.likes}, {L: user.superLikes}, {L: user.cover}, {M: user.cover}]
-        // }
-        // this.database.executeStatement(params);
-        
         const params = {
             TableName: this.name,
             Item: user
         }
 
-        this.putCmd(params);
+        const data = await this.putCmd(params);
+        const status = data?.status;
+        return status; 
     }
 
-    insertToken(query: {ip: string, token: string})
+    async insertToken(query: {userId: string, ip: string, token: string})
     {
+        const params: UpdateCommandInput = {
+            TableName: this.name,
+            Key: {
+                primaryKey: query.userId,
+            },
+            UpdateExpression: `SET ips.${query.ip}=:t`,
+            ExpressionAttributeValues: {
+                ":t": query.token
+            }
+        } 
+
+        const data = await this.updateCmd(params);
+        const status = data?.status;
+        return status;
     }
 
-    update(query: {}) 
+    async update(query: {params?: UpdateCommandInput, id: string, expression: string, names: Record<string, string>, values: Record<string, any>}) 
     {
+        let projection = "";
+        Object.keys(query.names).forEach((key: string) => {
+            projection += key;
+        })
+
+        const params: UpdateCommandInput = {
+            TableName: this.name,
+            Key: {
+                primaryKey: query.id,
+            },
+            // ProjectionExpression: projection,
+            UpdateExpression: query.expression,
+            ExpressionAttributeNames: query.names,
+            ExpressionAttributeValues: query.values,
+        } 
+
+        const data = await this.updateCmd(params);
+        const status = data?.status;
+        return status;
     }
 
-    delete(query: {id: string})
+    async delete(query: {id: string})
     {
+        const params = {
+            TableName: this.name,
+            Key: {
+                primaryKey: query.id
+            }
+        }
+        
+        const data = await this.deleteCmd(params);
+        const status = data?.status;
+        return status;
     }
 }

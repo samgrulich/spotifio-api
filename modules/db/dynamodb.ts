@@ -3,11 +3,13 @@
 
 // Create the DynamoDB service client module using ES6 syntax.
 import { DynamoDBClient, 
-  ExecuteStatementCommand, ExecuteStatementCommandInput} from "@aws-sdk/client-dynamodb?dts";
+  ExecuteStatementCommand, ExecuteStatementCommandInput } from "@aws-sdk/client-dynamodb?dts";
 
 import { DynamoDBDocumentClient, 
-  PutCommand, GetCommand, UpdateCommand, DeleteCommand, 
+  PutCommand, GetCommand, UpdateCommand, DeleteCommand,
   PutCommandInput, GetCommandInput, UpdateCommandInput, DeleteCommandInput } from "@aws-sdk/lib-dynamodb?dts";
+
+// import { Command } from "@aws-sdk/smithy-client?dts";
 
 
 class DynamoSetup
@@ -101,6 +103,17 @@ export class DynamoDatabase
       console.error(err);
     }
   }
+
+  // async executeCommand(params: any)
+  // {
+  //   try {
+  //     const data = await this.database.documentClient.send(new PutCommand(params));
+  //     // console.log("Success - item added or updated", data);
+  //     return {status: 200, data};
+  //   } catch (err) {
+  //     console.log("Error", err);
+  //   }
+  // }
 }
 
 export class Table 
@@ -135,7 +148,7 @@ export class Table
     try {
       const data = await this.database.documentClient.send(new PutCommand(params));
       // console.log("Success - item added or updated", data);
-      // return {status: 200, data};
+      return {status: 200, data};
     } catch (err) {
       console.log("Error", err);
     }
@@ -157,7 +170,7 @@ export class Table
     try {
       const data = await this.database.documentClient.send(new UpdateCommand(params));
       // console.log("Success - item added or updated", data);
-      // return data;
+      return {status: 200, data};
     } catch (err) {
       console.log("Error", err);
     }
@@ -168,7 +181,7 @@ export class Table
     try {
       const data = await this.database.documentClient.send(new DeleteCommand(params));
       // console.log("Success - item added or updated", data);
-      // return data;
+      return {status: 200, data};
     } catch (err) {
       console.log("Error", err);
     }
