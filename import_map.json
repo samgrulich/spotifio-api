@@ -10,7 +10,8 @@
 
     "fs": "https://deno.land/std@0.153.0/fs/mod.ts",
 
-    "@aws-sdk": "https://cdn.skypack.dev/@aws-sdk",
-    "@aws-sdk/": "https://cdn.skypack.dev/@aws-sdk/"
+    "@aws-sdk/": "https://cdn.skypack.dev/@aws-sdk/",
+
+    "dotenv/": "https://deno.land/x/dotenv@v3.2.0/"
   }
 }

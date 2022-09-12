@@ -1,5 +1,4 @@
 // deno-lint-ignore-file
-// deno-lint-ignore-file ban-types
 
 // Create the DynamoDB service client module using ES6 syntax.
 import { DynamoDBClient, 
@@ -78,16 +77,14 @@ export class DynamoDatabase
 {
   client: DynamoDBClient;
   documentClient: DynamoDBDocumentClient;
-  tableName: string;
 
-  constructor(region: string, tableName: string)
+  constructor(region: string)
   {
     const setup = new DynamoSetup(region);
     
     this.client = setup.client;
     this.documentClient = setup.documentClient;
 
-    this.tableName = tableName;
   }
 
   async executeStatement(params: ExecuteStatementCommandInput)
@@ -118,8 +115,8 @@ export class DynamoDatabase
 
 export class Table 
 {
-  name: string;
-  database: DynamoDatabase;
+  protected name: string;
+  protected database: DynamoDatabase;
 
   constructor(name: string, database: DynamoDatabase)
   {
@@ -143,7 +140,7 @@ export class Table
   {
   }
 
-  async putCmd(params: PutCommandInput)
+  protected async putCmd(params: PutCommandInput)
   {
     try {
       const data = await this.database.documentClient.send(new PutCommand(params));
@@ -154,7 +151,7 @@ export class Table
     }
   }
 
-  async getCmd(params: GetCommandInput)
+  protected async getCmd(params: GetCommandInput)
   {
     try {
       const data = await this.database.documentClient.send(new GetCommand(params));
@@ -165,7 +162,7 @@ export class Table
     }
   }
 
-  async updateCmd(params: UpdateCommandInput)
+  protected async updateCmd(params: UpdateCommandInput)
   {
     try {
       const data = await this.database.documentClient.send(new UpdateCommand(params));
@@ -176,7 +173,7 @@ export class Table
     }
   }
 
-  async deleteCmd(params: DeleteCommandInput)
+  protected async deleteCmd(params: DeleteCommandInput)
   {
     try {
       const data = await this.database.documentClient.send(new DeleteCommand(params));
