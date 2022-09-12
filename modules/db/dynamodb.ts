@@ -43,6 +43,10 @@ class DynamoSetup
       secretAccessKey
     }
 
+    console.log(this.region);
+    console.log(accessKeyId);
+    console.log(secretAccessKey);
+
     // Create an Amazon DynamoDB service client object.
     const ddbClient = new DynamoDBClient({ region, credentials });
     return ddbClient;

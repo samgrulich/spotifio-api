@@ -10,7 +10,16 @@
 
     "fs": "https://deno.land/std@0.153.0/fs/mod.ts",
 
-    "@aws-sdk/": "https://cdn.skypack.dev/@aws-sdk/",
+    // "@aws-sdk/": "https://cdn.skypack.dev/@aws-sdk/",
+
+    // "@aws-sdk/": https://esm.sh/@aws-sdk
+      // https://esm.sh/@aws-sdk/client-dynamodb@3.169.0
+      // https://esm.sh/@aws-sdk/lib-dynamodb@3.169.0
+
+    // "aws-sdk/": https://unpkg.com/browse/aws-sdk@2.1214.0
+      // https://unpkg.com/browse/aws-sdk@2.1214.0/clients/dynamodb.js
+      // https://unpkg.com/browse/aws-sdk@2.1214.0/clients/dynamodb.d.ts
+
 
     "dotenv/": "https://deno.land/x/dotenv@v3.2.0/"
   }
