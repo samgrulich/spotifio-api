@@ -2,6 +2,7 @@
 import { Table, DynamoDatabase } from "./dynamodb.ts";
 import { Image, Playlist, User } from "./types.ts";
 import { GetCommandInput, UpdateCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
+import { QueryInputFilterSensitiveLog } from "https://esm.sh/v94/@aws-sdk/client-dynamodb@3.169.0/dist-types/index.d.ts";
 
 
 export class Users extends Table
@@ -28,17 +29,25 @@ export class Users extends Table
 
     async getToken(query: {userId: string, ip: string})
     {
+        const expr = `ips.${query.ip}`;
+        
+        console.log(expr); 
+        // return;
+        
         const params: GetCommandInput = {
             TableName: this.name,
             Key: {
-                primaryKey: query.userId,
+                id: query.userId,
             },
-            ProjectionExpression: `ips.${query.ip}` 
+            ProjectionExpression: "ips.#ip", 
+            ExpressionAttributeNames: {
+                "#ip": query.ip
+            }
         }
 
         const data = await this.getCmd(params);
-        const status = data?.status;
-        return status; 
+        const token = data?.data;
+        return token; 
     }
 
     async insert(query: {id: string, name: string, password: string, email: string, playlists: Array<Playlist>, liked: Array<string>, cover: Array<Image>})

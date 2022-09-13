@@ -1,4 +1,4 @@
-import { SPOTIFY_API_URL as API_URL, SPOTIFY_API_AUTH as API_AUTH } from "../../consts/spotify.ts";
+import { SPOTIFY_API_URL as API_URL, SPOTIFY_API_AUTH as API_AUTH } from "../../consts/c_spotify.ts";
 import { TokenData } from "../types.ts"; 
 
 const HEADERS = {

@@ -11,3 +11,8 @@ export function splitCookies(cookie: string): Record<string, string>
 
   return result;
 }
+
+export function formatIP(ip: string): string
+{
+  return ip.replaceAll(".", "-");
+}
