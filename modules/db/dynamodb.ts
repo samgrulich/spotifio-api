@@ -2,11 +2,11 @@
 
 // Create the DynamoDB service client module using ES6 syntax.
 import { DynamoDBClient, 
-  ExecuteStatementCommand, ExecuteStatementCommandInput } from "@aws-sdk/client-dynamodb?dts";
+  ExecuteStatementCommand, ExecuteStatementCommandInput } from "@aws-sdk/client-dynamodb@3.169.0";
 
 import { DynamoDBDocumentClient, 
   PutCommand, GetCommand, UpdateCommand, DeleteCommand,
-  PutCommandInput, GetCommandInput, UpdateCommandInput, DeleteCommandInput } from "@aws-sdk/lib-dynamodb?dts";
+  PutCommandInput, GetCommandInput, UpdateCommandInput, DeleteCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
 
 // import { Command } from "@aws-sdk/smithy-client?dts";
 

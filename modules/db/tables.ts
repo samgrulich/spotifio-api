@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { Table, DynamoDatabase } from "./dynamodb.ts";
 import { Image, Playlist, User } from "./types.ts";
-import { GetCommandInput, UpdateCommandInput } from "@aws-sdk/lib-dynamodb?dts";
+import { GetCommandInput, UpdateCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
 
 
 export class Users extends Table
