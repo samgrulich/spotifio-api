@@ -4,10 +4,10 @@ import { Application, Router, Context } from "oak";
 import { DynamoDatabase } from "./modules/db/dynamodb.ts";
 import { Users } from "./modules/db/tables.ts";
 
-import { validateToken } from "./modules/auth/tokens.ts";
 import { formatIP } from "./modules/functions.ts";
 
-import { newUser } from "./routes/auth.ts";
+// import { newUser } from "./routes/auth.ts";
+import {connect, callback} from "./routes/spotifyAuth.ts";
 
 
 const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
@@ -27,12 +27,25 @@ router
   .get("/", (ctxt) => {
     ctxt.response.body = "hello from api";
   })
-  .post("/new_user", async (ctxt) => {
-    const body = await ctxt.request.body({ type: "json"});
-    const data = await body.value;
-    console.log(data);
+  .use("/spotify/connect", (ctxt) => {
+    connect(ctxt);
+  })
+  .get("/spotify/callback", (ctxt) => {
+    // check ip-token pair
 
-    newUser(users, data);
+    callback(ctxt);
+
+    // if callback doesnt find the user
+      // create new
+    //else 
+      // login (create new ip-token pair) 
+      // etc... 
+
+    // const body = await ctxt.request.body({ type: "json"});
+    // const data = await body.value;
+    // console.log(data);
+
+    // newUser(users, data);
   });
 
 const app = new Application();
@@ -40,8 +53,8 @@ app
   .use((ctxt, next) => {
     const ip = formatIP(ctxt.request.ip);
 
-    validateToken(users, "testID", ip, "testToken")
-      .then(async (_isValid) => {
+    users.validateToken({userId: "testId", ip, token:"testToken"})
+      .then(async (_) => {
         await next();
       }).catch((err) => {
         console.log(err);
