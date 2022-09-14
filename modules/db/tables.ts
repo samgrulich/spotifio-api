@@ -2,8 +2,18 @@
 import { Table, DynamoDatabase } from "./dynamodb.ts";
 import { Image, Playlist, User } from "./types.ts";
 import { GetCommandInput, UpdateCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
-import { QueryInputFilterSensitiveLog } from "https://esm.sh/v94/@aws-sdk/client-dynamodb@3.169.0/dist-types/index.d.ts";
 
+
+export interface UserInput
+{
+    id: string;
+    name: string;
+    password: string;
+    email: string;
+    playlists: Array<Playlist>;
+    liked: Array<string>;
+    cover: Array<Image>;
+}
 
 export class Users extends Table
 {
@@ -23,17 +33,11 @@ export class Users extends Table
 
         const data = await super.getCmd(params);
         const user = data?.data as User;
-        
         return user;
     }
 
     async getToken(query: {userId: string, ip: string})
     {
-        const expr = `ips.${query.ip}`;
-        
-        console.log(expr); 
-        // return;
-        
         const params: GetCommandInput = {
             TableName: this.name,
             Key: {
@@ -69,8 +73,8 @@ export class Users extends Table
         }
 
         const data = await this.putCmd(params);
-        const status = data?.status;
-        return status; 
+        // const status = data?.status;
+        // return status; 
     }
 
     async insertToken(query: {userId: string, ip: string, token: string})
@@ -87,8 +91,8 @@ export class Users extends Table
         } 
 
         const data = await this.updateCmd(params);
-        const status = data?.status;
-        return status;
+        // const status = data?.status;
+        // return status;
     }
 
     async update(query: {params?: UpdateCommandInput, id: string, expression: string, names: Record<string, string>, values: Record<string, any>}) 
@@ -110,8 +114,8 @@ export class Users extends Table
         } 
 
         const data = await this.updateCmd(params);
-        const status = data?.status;
-        return status;
+        // const status = data?.status;
+        // return status;
     }
 
     async delete(query: {id: string})
@@ -124,7 +128,7 @@ export class Users extends Table
         }
         
         const data = await this.deleteCmd(params);
-        const status = data?.status;
-        return status;
+        // const status = data?.status;
+        // return status;
     }
 }

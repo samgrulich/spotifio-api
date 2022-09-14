@@ -1,41 +1,23 @@
 import "dotenv/load.ts";
-
-import { User } from "./types.ts";
-
-import { DynamoDatabase } from "./dynamodb.ts";
-import { Users } from "./tables.ts";
-
-// import { GetCommand, GetCommandInput } from "@aws-sdk/lib-dynamodb?dts";
-// import { GetItemCommand, GetItemCommandInput } from "@aws-sdk/client-dynamodb?dts";
+import { DynamoDB, DynamoDBClient, DynamoDBClientConfig, GetItemCommand, GetItemCommandInput, PutItemCommand, PutItemCommandInput } from "https://esm.sh/@aws-sdk/client-dynamodb@3.169.0";
+import { GetCommand, GetCommandInput } from "https://esm.sh/@aws-sdk/lib-dynamodb@3.169.0";
 
 const REGION = "eu-central-1";
-const database = new DynamoDatabase(REGION);
-const table = new Users(database);
-
-// const x = Deno.env.get("CLIENT_ID");
-// console.log(x);
-
-// const x = table.get({id: "36b8f84d-df4e-4d49-b662-bcde71a8764f"});
-// const id = "36b8f84d-df4e-4d49-b662-bcde71a8764f";
-// const params: GetItemCommandInput = {
-//     TableName: "Users",
-//     Key: {
-//         primaryKey: {S: id}
-//     }
-// };
-
-// const data = await database.documentClient.send(new GetItemCommand(params));
-// // console.log(data.Item);
-// 
-const user = {
-    id: "testID",
-    name: "Sam",
-    password: "hashed password",
-    email: "sam@spotifio.com",
-    playlists: [],
-    liked: [],
-    superLiked: [],
-    cover: [],
+const config: DynamoDBClientConfig = {
+    region: REGION,
+    credentials: {
+        accessKeyId: Deno.env.get("AWS_ACCESS_KEY_ID") ?? "",
+        secretAccessKey: Deno.env.get("AWS_SECRET_ACCESS_KEY") ?? "",
+    }
 }
 
-table.insert(user);
+const database = new DynamoDBClient(config);
+const commandInput: GetCommandInput = {
+    TableName: "Users",
+    Key:{
+        id: "36b8f84d-df4e-4d49-b662-bcde71a8764f",
+    }
+};
+
+const data = await database.send(new GetCommand(commandInput));
+console.log(data.Item);

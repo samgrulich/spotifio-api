@@ -7,6 +7,8 @@ import { Users } from "./modules/db/tables.ts";
 import { validateToken } from "./modules/auth/tokens.ts";
 import { formatIP } from "./modules/functions.ts";
 
+import { newUser } from "./routes/auth.ts";
+
 
 const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
 
@@ -24,6 +26,13 @@ const router = new Router();
 router
   .get("/", (ctxt) => {
     ctxt.response.body = "hello from api";
+  })
+  .post("/new_user", async (ctxt) => {
+    const body = await ctxt.request.body({ type: "json"});
+    const data = await body.value;
+    console.log(data);
+
+    newUser(users, data);
   });
 
 const app = new Application();

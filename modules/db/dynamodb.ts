@@ -43,10 +43,6 @@ class DynamoSetup
       secretAccessKey
     }
 
-    console.log(this.region);
-    console.log(accessKeyId);
-    console.log(secretAccessKey);
-
     // Create an Amazon DynamoDB service client object.
     const ddbClient = new DynamoDBClient({ region, credentials });
     return ddbClient;
@@ -97,9 +93,9 @@ export class DynamoDatabase
       const data = await this.documentClient.send(new ExecuteStatementCommand(params));
       
       if (data)
-        return {state: 200, data: data.Items}
+        return {status: 200, data: data.Items}
 
-      return {state: 200}// For unit tests.
+      throw {status: 404}
     } catch (err) {
       console.error(err);
     }
@@ -148,10 +144,10 @@ export class Table
   {
     try {
       const data = await this.database.documentClient.send(new PutCommand(params));
-      // console.log("Success - item added or updated", data);
-      return {status: 200, data};
+      return data;
     } catch (err) {
       console.log("Error", err);
+      throw 404;
     }
   }
 
@@ -159,10 +155,10 @@ export class Table
   {
     try {
       const data = await this.database.documentClient.send(new GetCommand(params));
-      // console.log("Success :", data.Item);
-      return {status: 200, data: data.Item}
+      return data.Item;
     } catch (err) {
       console.log("Error", err);
+      throw 404;
     }
   }
 
@@ -170,10 +166,10 @@ export class Table
   {
     try {
       const data = await this.database.documentClient.send(new UpdateCommand(params));
-      // console.log("Success - item added or updated", data);
-      return {status: 200, data};
+      return data;
     } catch (err) {
       console.log("Error", err);
+      throw 404;
     }
   }
 
@@ -181,10 +177,10 @@ export class Table
   {
     try {
       const data = await this.database.documentClient.send(new DeleteCommand(params));
-      // console.log("Success - item added or updated", data);
-      return {status: 200, data};
+      return data;
     } catch (err) {
       console.log("Error", err);
+      throw 404;
     }
   }
 }
