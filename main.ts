@@ -28,10 +28,12 @@ router
     ctxt.response.body = "hello from api";
   })
   .use("/spotify/connect", (ctxt) => {
+    // check if user is logged in => return already signed in error 
     connect(ctxt);
   })
-  .get("/spotify/callback", (ctxt) => {
-    // check ip-token pair
+  .get("/spotify/callback", async (ctxt) => {
+    const request = await ctxt.request.body({type: "json"});
+    const data  = await request.value;
 
     callback(ctxt);
 
@@ -48,18 +50,28 @@ router
     // newUser(users, data);
   });
 
+
 const app = new Application();
 app
-  .use((ctxt, next) => {
+  .use(async (ctxt, next) => {
+    const request = await ctxt.request.body({type: "json"});
+    const data = await request.value;
+
     const ip = formatIP(ctxt.request.ip);
 
-    users.validateToken({userId: "testId", ip, token:"testToken"})
-      .then(async (_) => {
-        await next();
+    const {logged, userId, token} = await users.validateToken({userId: "testId", ip, token:"testToken"})
+      .then((_) => {
+        return {logged: true, userId: data["userId"], token: data["token"]};
       }).catch((err) => {
-        console.log(err);
-        return404(ctxt);
+        // console.log(err);
+        // return404(ctxt);
+        return {logged: false, userId: "", token: ""};
       });
+    
+    ctxt.response.headers.set("X-UserId", userId);
+    ctxt.response.headers.set("X-Token", token);
+    ctxt.response.headers.set("X-Logged", logged.toString());
+    await next();
   })
   .use(router.routes())
   .use(router.allowedMethods())
