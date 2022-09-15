@@ -1,6 +1,8 @@
 import { Context } from "oak";
-import {API_AUTH, API_TOKEN_URL, SCOPES} from "../modules/spotify/consts.ts";
-import {Tokens} from "../modules/spotify/base.ts";
+import { API_AUTH, API_TOKEN_URL, SCOPES } from "../modules/spotify/consts.ts";
+import { Tokens } from "../modules/spotify/base.ts";
+import { User } from "../modules/db/types.ts";
+import { formatIP } from "../modules/functions.ts";
 
 export function connect(ctxt: Context)
 {
@@ -22,26 +24,33 @@ export function connect(ctxt: Context)
   ctxt.response.redirect(queryURL);
 }
 
-export function callback(ctxt: Context)
+
+function parseCallbackParams(params: URLSearchParams)
+{
+  if (!params.has("code"))
+  {
+    const err = {status: parseInt(params.get("error") || "404"), reason: "Spotify authentication failed"}; 
+    throw err;
+  }
+
+  const code = params.get("code");
+
+  return code;
+}
+
+export async function callback(ctxt: Context)
 {
   const url = new URL(ctxt.request.url);
   const params: URLSearchParams = url.searchParams;
 
-  if (!params.has("code"))
-  {
-    // const err: SpotifyError = {disc: "error", code: parseInt(params.get("error") || "0"), msg: "Spotify authentication failed"}; 
-    // return  ctx.render(err);
-    // return error
-  }
-
-  const code = params.get("code");
+  const code = parseCallbackParams(params);
   const data = {
     grant_type: "authorization_code",
     code: code || "",
     redirect_uri: `${url.origin}/auth/callback`,
   };
 
-  fetch(API_TOKEN_URL, {
+  const tokens = await fetch(API_TOKEN_URL, {
     method: "POST",
     cache: "no-cache",
     headers: {
@@ -57,13 +66,19 @@ export function callback(ctxt: Context)
       timeToLive: data["expires_in"],
       refreshToken: data["refresh_token"],
     };
-    const tokens: Tokens = new Tokens(credentials);
-
-    // return credentials
+    
+    return new Tokens(credentials);
   });
 
-  // query spotify for user data
+  return tokens;
+  
+  // query spotify user data
+  const spotifyUser = await tokens.get("me");
+  const userId = spotifyUser["id"];
+
   // query database for user data
+  
+
   // if new user
     // create new entry to the users table
     // create new entry for all of his playlists

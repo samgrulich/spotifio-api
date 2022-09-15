@@ -31,14 +31,14 @@ export async function post(url: string, data: Record<string, string>)
 
 export class Tokens 
 {
-  #refreshToken: string;
+  refreshToken: string;
   #accessToken: string;
   #timeToLive: number;
   #timeStamp: number;
 
   constructor(input: {refreshToken: string, accessToken: string, timeToLive: number, timeStamp?: number})
   {
-    this.#refreshToken = input.refreshToken;
+    this.refreshToken = input.refreshToken;
     this.#accessToken = input.accessToken;
     this.#timeToLive = input.timeToLive;
     this.#timeStamp = input.timeStamp ? input.timeStamp : Date.now() / 1000;
@@ -56,7 +56,7 @@ export class Tokens
     if (now < this.timeToLive)
       return this.#accessToken;
       
-    const resp = post('refresh', {refresh_token: this.#refreshToken});
+    const resp = post('refresh', {refresh_token: this.refreshToken});
     resp.then((data) => {
       this.#accessToken = data["access_token"];
       this.#timeToLive = data["expires_in"];

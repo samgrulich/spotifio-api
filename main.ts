@@ -3,6 +3,7 @@ import "dotenv/load.ts";
 import { Application, Router, Context } from "oak";
 import { DynamoDatabase } from "./modules/db/dynamodb.ts";
 import { Users } from "./modules/db/tables.ts";
+import { createUser, loginUser } from "./routes/auth.ts";
 
 import { formatIP } from "./modules/functions.ts";
 
@@ -32,16 +33,29 @@ router
     connect(ctxt);
   })
   .get("/spotify/callback", async (ctxt) => {
-    const request = await ctxt.request.body({type: "json"});
-    const data  = await request.value;
+    const isLogged = ctxt.response.headers.get("X-Logged");
+    if (isLogged == "true") 
+    {
+      //return already logged in error
+      return;
+    }
 
-    callback(ctxt);
+    const tokens = await callback(ctxt)
+      .catch((err) => {
+        //return data as error
+        return;
+      });
+    
+    const userId = ctxt.response.headers.get("X-UserId");
+    if(!userId)
+    {
+      // create user
+      createUser();
+      return;
+    }
 
-    // if callback doesnt find the user
-      // create new
-    //else 
-      // login (create new ip-token pair) 
-      // etc... 
+    // login user
+    loginUser();
 
     // const body = await ctxt.request.body({ type: "json"});
     // const data = await body.value;

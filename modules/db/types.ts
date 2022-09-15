@@ -21,8 +21,8 @@ export interface User
 {
   id: string;
   name: string;
-  password: string;
-  ips: Record<string, string>;
+  refreshToken: string;
+  ips: [{ip: string, token: string}];
   playlists: Array<Playlist>;
   likes: Array<string>;
   superLikes: Array<string>;
