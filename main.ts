@@ -4,6 +4,7 @@ import { Application, Router, Context } from "oak";
 import { DynamoDatabase } from "./modules/db/dynamodb.ts";
 import { Users } from "./modules/db/tables.ts";
 import { createUser, loginUser } from "./routes/auth.ts";
+import { IError } from "./modules/errors.ts";
 
 import { formatIP } from "./modules/functions.ts";
 
@@ -40,22 +41,24 @@ router
       return;
     }
 
-    const tokens = await callback(ctxt)
-      .catch((err) => {
-        //return data as error
-        return;
-      });
+    const {tokens, spotifyUserId} = await callback(ctxt)
+      .then(async (tokens) => {
+        const spotifyUser = await tokens.get("me");
+        const userId = spotifyUser["id"];
+
+        return {tokens, userId};
+      })
     
     const userId = ctxt.response.headers.get("X-UserId");
     if(!userId)
     {
       // create user
-      createUser();
+      createUser(users);
       return;
     }
 
     // login user
-    loginUser();
+    loginUser(users);
 
     // const body = await ctxt.request.body({ type: "json"});
     // const data = await body.value;
@@ -67,7 +70,17 @@ router
 
 const app = new Application();
 app
+  .use((ctxt, next) => {
+    // error handler
+    next()
+      .catch((err: IError) => {
+        ctxt.response.status = err.status;
+        ctxt.response.headers.set("Content-Type", "application/json");
+        ctxt.response.body = JSON.stringify({reason: err.reason});
+      });
+  })  
   .use(async (ctxt, next) => {
+    // token validation
     const request = await ctxt.request.body({type: "json"});
     const data = await request.value;
 
@@ -76,11 +89,7 @@ app
     const {logged, userId, token} = await users.validateToken({userId: "testId", ip, token:"testToken"})
       .then((_) => {
         return {logged: true, userId: data["userId"], token: data["token"]};
-      }).catch((err) => {
-        // console.log(err);
-        // return404(ctxt);
-        return {logged: false, userId: "", token: ""};
-      });
+      })
     
     ctxt.response.headers.set("X-UserId", userId);
     ctxt.response.headers.set("X-Token", token);

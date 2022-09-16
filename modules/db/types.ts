@@ -22,7 +22,7 @@ export interface User
   id: string;
   name: string;
   refreshToken: string;
-  ips: [{ip: string, token: string}];
+  ips: Record<string, string>;
   playlists: Array<Playlist>;
   likes: Array<string>;
   superLikes: Array<string>;

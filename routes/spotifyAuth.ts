@@ -73,8 +73,6 @@ export async function callback(ctxt: Context)
   return tokens;
   
   // query spotify user data
-  const spotifyUser = await tokens.get("me");
-  const userId = spotifyUser["id"];
 
   // query database for user data
   

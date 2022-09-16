@@ -1,8 +1,4 @@
-interface IError
-{
-  reason: string;
-  status: number;
-}
+import { IError } from "../errors.ts";
 
 const errMessage = (reason: string, status: number): IError => ({reason, status});
 const missing = (msg: string): IError => errMessage(`No ${msg} passed`, 400);

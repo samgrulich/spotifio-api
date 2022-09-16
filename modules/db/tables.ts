@@ -9,7 +9,9 @@ export interface UserInput
 {
   id: string;
   name: string;
-  password: string;
+  refreshToken: string;
+  ip: string;
+  token: string;
   email: string;
   playlists: Array<Playlist>;
   liked: Array<string>;
@@ -109,12 +111,16 @@ export class Users extends Table
   }
 
      
-  async insert(query: {id: string, name: string, password: string, email: string, playlists: Array<Playlist>, liked: Array<string>, cover: Array<Image>})
+  async insert(query: UserInput) 
   {
+    const authPair: Record<string, string> = {};
+    authPair[query.ip] = query.token;
+
     const user: User = {
       id: query.id,
-      name: query.name, password: query.password,
-      ips: {},
+      name: query.name, 
+      refreshToken: query.refreshToken,
+      ips: authPair,
       playlists: query.playlists,
       likes: query.liked,
       superLikes: [],
@@ -160,7 +166,7 @@ export class Users extends Table
     const params: UpdateCommandInput = {
       TableName: this.name,
       Key: {
-        primaryKey: query.id,
+        id: query.id,
       },
       // ProjectionExpression: projection,
       UpdateExpression: query.expression,
@@ -172,6 +178,7 @@ export class Users extends Table
     // const status = data?.status;
     // return status;
   }
+
 
   async delete(query: {id: string})
   {
