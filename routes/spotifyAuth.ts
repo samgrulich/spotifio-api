@@ -1,8 +1,6 @@
 import { Context } from "oak";
 import { API_AUTH, API_TOKEN_URL, SCOPES } from "../modules/spotify/consts.ts";
 import { Tokens } from "../modules/spotify/base.ts";
-import { User } from "../modules/db/types.ts";
-import { formatIP } from "../modules/functions.ts";
 
 export function connect(ctxt: Context)
 {

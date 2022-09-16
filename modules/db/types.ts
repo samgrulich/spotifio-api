@@ -88,7 +88,7 @@ export interface Album
   aviableMarkets: Array<string>;
   cover: Array<Image>;
   restrictions?: {reason: string};
-  artist: Array<Artist>;
+  artists: Array<Artist>;
 }
 
 export interface AlbumShort

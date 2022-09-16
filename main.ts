@@ -3,13 +3,14 @@ import "dotenv/load.ts";
 import { Application, Router, Context } from "oak";
 import { DynamoDatabase } from "./modules/db/dynamodb.ts";
 import { Users } from "./modules/db/tables.ts";
-import { createUser, loginUser } from "./routes/auth.ts";
+import { createUser, generateToken, loginUser } from "./routes/auth.ts";
 import { IError } from "./modules/errors.ts";
 
 import { formatIP } from "./modules/functions.ts";
 
 // import { newUser } from "./routes/auth.ts";
 import {connect, callback} from "./routes/spotifyAuth.ts";
+import { parseMultiple, parsePlaylist, parseTrack, parseUser } from "./modules/spotify/parsers.ts";
 
 
 const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
@@ -36,35 +37,40 @@ router
   .get("/spotify/callback", async (ctxt) => {
     const isLogged = ctxt.response.headers.get("X-Logged");
     if (isLogged == "true") 
-    {
-      //return already logged in error
-      return;
-    }
-
-    const {tokens, spotifyUserId} = await callback(ctxt)
+      throw {status: 403, reason: "Already logged in"};
+    
+    const {tokens, userData} = await callback(ctxt)
       .then(async (tokens) => {
         const spotifyUser = await tokens.get("me");
-        const userId = spotifyUser["id"];
 
-        return {tokens, userId};
+        const ip = formatIP(ctxt.request.ip);
+        const token = generateToken();
+
+        const userData = parseUser(spotifyUser, tokens.refreshToken, ip, token);
+
+        return {tokens, userData};
       })
     
     const userId = ctxt.response.headers.get("X-UserId");
-    if(!userId)
+    if(!userId || userId != userData.id)
     {
-      // create user
-      createUser(users);
-      return;
+      // get users playlists and likes
+      const rawPlaylists = await tokens.getAll("me/playlists");
+      const rawLikes = await tokens.getAll("me/tracks");
+
+      // parse spotify data to io(my) data
+      const playlists = parseMultiple(rawPlaylists, parsePlaylist);
+      const likes = parseMultiple(rawLikes, parseTrack);
+
+      userData.playlists = playlists;
+      userData.liked = likes;
+
+      createUser(users, userData);
+      return {msg: "New user created", action: "create"};
     }
 
-    // login user
-    loginUser(users);
-
-    // const body = await ctxt.request.body({ type: "json"});
-    // const data = await body.value;
-    // console.log(data);
-
-    // newUser(users, data);
+    loginUser(users, userData);
+    return {msg: "Logged in", action: "login"};
   });
 
 
@@ -72,10 +78,15 @@ const app = new Application();
 app
   .use((ctxt, next) => {
     // error handler
+    ctxt.response.headers.set("Content-Type", "application/json");
+    
     next()
+      .then((data) => {
+        ctxt.response.status = 200;
+        ctxt.response.body = JSON.stringify(data);
+      })
       .catch((err: IError) => {
         ctxt.response.status = err.status;
-        ctxt.response.headers.set("Content-Type", "application/json");
         ctxt.response.body = JSON.stringify({reason: err.reason});
       });
   })  

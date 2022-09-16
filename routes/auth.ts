@@ -1,4 +1,3 @@
-import { User } from "../modules/db/types.ts";
 import { Users, UserInput } from "../modules/db/tables.ts";
 
 
@@ -7,7 +6,7 @@ export interface AuthOutput
   token: string;
 }
 
-function generateToken(): string
+export function generateToken(): string
 {
   const token = crypto.randomUUID();
   return token;
@@ -15,21 +14,16 @@ function generateToken(): string
 
 export function createUser(table: Users, userData: UserInput)
 {
-  userData.token = generateToken();
-  
   table.insert(userData);
-
-  Promise.resolve("success");
 }
 
-export function loginUser(table: Users, userData: {userId: string, ip: string})
+export function loginUser(table: Users, userData: UserInput)
 {
-  const token = generateToken();
-  const user = {
-    token,
-    ...userData
-  };
+  const userAuthPair = {
+    userId: userData.id,
+    ip: userData.ip,
+    token: userData.token
+  }
 
-  table.insertToken(user);
-  Promise.resolve("success");
+  table.insertToken(userAuthPair);
 }

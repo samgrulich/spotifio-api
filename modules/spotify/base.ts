@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { API_URL, API_AUTH } from "./consts.ts";
 
 const HEADERS = {
@@ -5,29 +6,64 @@ const HEADERS = {
   "Content-Type": "application/x-www-form-urlencoded",
 };
 
-export async function get(url: string)
+export async function get(url: string | URL, headers: Record<string, string>=HEADERS)
 {
+  // no error handling
   const resp = await fetch(new URL(url, API_URL), {
-      method: "GET",
-      cache: "no-cache",
-      headers: HEADERS,
+    method: "GET",
+    cache: "no-cache",
+    headers: headers,
+  }).catch((err) => {
+    console.log(err);
+    throw {status: 503, reason: "Spotify connection failed"};
   });
 
   return await resp.json();
 }
 
-export async function post(url: string, data: Record<string, string>)
+export async function post(url: string | URL, data: Record<string, string>, headers: Record<string, string>=HEADERS)
 {
+  // no error handling
   const resp = await fetch(new URL(url, API_URL), {
-      method: "POST",
-      cache: "no-cache",
-      headers: HEADERS,
-      body: new URLSearchParams(data),
+    method: "POST",
+    cache: "no-cache",
+    headers: headers,
+    body: new URLSearchParams(data),
+  }).catch((err) => {
+    console.log(err);
+    throw {status: 503, reason: "Spotify connection failed"};
   });
 
   return await resp.json(); 
 }
 
+export async function getAll<T = any>(url: string | URL, headers?: Record<string, string>): Promise<Array<T>>
+{
+  const resp = await get(url);
+  const batchLimit = 50;
+  const lastLimit = resp["limit"];
+  const total = resp["total"] - lastLimit; 
+  const totalBatches = total / batchLimit;
+  const result = [resp["items"]];
+  const responses = [];
+
+  for (let i = 0; i < totalBatches; i++)
+  {
+    const batchURL = new URL(url);
+    batchURL.searchParams.set("offset", (i * batchLimit).toString());
+    batchURL.searchParams.set("limit", batchLimit.toString());
+
+    responses.push(get(batchURL, headers));
+  }
+
+  Promise.all(responses).then((values) => {
+    values.map((resp) => {
+      result.push(resp["items"]);
+    });
+  })
+  
+  return result;
+}
 
 export class Tokens 
 {
@@ -72,22 +108,28 @@ export class Tokens
     return undefined;
   }
 
-  protected async fetch(endpoint: string, method: string)
+  protected get authHeaders()
   {
-    const url = new URL(endpoint, API_URL);
-    const data = await fetch(url, {method});
-    return await data.json();
+    return {
+      Authorization: `Brearer ${this.accessToken}`
+    }
   }
 
   async get(endpoint: string)
   {
-    const data = await this.fetch(endpoint, "GET");
+    const data = await get(endpoint, this.authHeaders); 
     return data;
   }
 
-  async post(endpoint: string)
+  async post(endpoint: string, inputData: Record<string, any>={})
   {
-    const data = await this.fetch(endpoint, "POST");
+    const data = await post(endpoint, inputData, this.authHeaders);
+    return data;
+  }
+
+  async getAll<T=any>(endpoint: string | URL)
+  {
+    const data = await getAll<T>(endpoint, this.authHeaders);
     return data;
   }
 }
