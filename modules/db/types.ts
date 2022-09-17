@@ -41,11 +41,11 @@ export interface Playlist
   public: boolean;
   color: Color;
   tracks: Array<Track>;
-  snaps: Array<SnapshotShort>;
+  snaps: Array<ISnapshotShort>;
   cover: Array<Image>;
 }
 
-export interface Snapshot
+export interface ISnapshot
 {
   id: string;
   hash?: string;
@@ -59,7 +59,13 @@ export interface Snapshot
   cover: Array<Image>;
 }
 
-export interface SnapshotShort
+export interface Chunk
+{
+  size: number;
+  tracks: Array<Track>;
+}
+
+export interface ISnapshotShort
 {
   id: string;
   hash?: string;

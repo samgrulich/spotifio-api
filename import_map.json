@@ -8,7 +8,8 @@
     "oak": "https://deno.land/x/oak@v11.1.0/mod.ts",
     "linke-dom": "https://esm.sh/linkedom",
 
-    "fs": "https://deno.land/std@0.153.0/fs/mod.ts",
+    "fs": "https://deno.land/std@0.156.0/fs/mod.ts",
+    "crypto": "https://deno.land/std@0.156.0/crypto/mod.ts",
 
     "@aws-sdk/": "https://esm.sh/@aws-sdk/",
 

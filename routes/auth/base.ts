@@ -1,4 +1,4 @@
-import { Users, UserInput } from "../modules/db/tables.ts";
+import { Users, UserInput } from "../../modules/db/tables.ts";
 
 
 export interface AuthOutput

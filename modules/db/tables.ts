@@ -194,3 +194,13 @@ export class Users extends Table
     // return status;
   }
 }
+
+export class Snapshots extends Table
+{
+
+}
+
+export class Schedule extends Table
+{
+  // init function 
+}

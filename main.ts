@@ -3,13 +3,13 @@ import "dotenv/load.ts";
 import { Application, Router, Context } from "oak";
 import { DynamoDatabase } from "./modules/db/dynamodb.ts";
 import { Users } from "./modules/db/tables.ts";
-import { createUser, generateToken, loginUser } from "./routes/auth.ts";
+import { createUser, generateToken, loginUser } from "./routes/auth/base.ts";
 import { IError } from "./modules/errors.ts";
 
 import { formatIP, respond } from "./modules/functions.ts";
 
 // import { newUser } from "./routes/auth.ts";
-import {connect, callback} from "./routes/spotifyAuth.ts";
+import {connect, callback} from "./routes/auth/spotify.ts";
 import { parseMultiple, parsePlaylist, parseTrack, parseUser } from "./modules/spotify/parsers.ts";
 
 
