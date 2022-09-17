@@ -6,7 +6,7 @@ import { Users } from "./modules/db/tables.ts";
 import { createUser, generateToken, loginUser } from "./routes/auth.ts";
 import { IError } from "./modules/errors.ts";
 
-import { formatIP } from "./modules/functions.ts";
+import { formatIP, respond } from "./modules/functions.ts";
 
 // import { newUser } from "./routes/auth.ts";
 import {connect, callback} from "./routes/spotifyAuth.ts";
@@ -66,11 +66,12 @@ router
       userData.liked = likes;
 
       createUser(users, userData);
-      return {msg: "New user created", action: "create"};
+      respond(ctxt, "New user created", "create", 201);
+      return;
     }
 
     loginUser(users, userData);
-    return {msg: "Logged in", action: "login"};
+    respond(ctxt, "Logged in", "login", 202);
   });
 
 
@@ -80,11 +81,8 @@ app
     // error handler
     ctxt.response.headers.set("Content-Type", "application/json");
     
+    // TODO: look if this (.then) is possible
     next()
-      .then((data) => {
-        ctxt.response.status = 200;
-        ctxt.response.body = JSON.stringify(data);
-      })
       .catch((err: IError) => {
         ctxt.response.status = err.status;
         ctxt.response.body = JSON.stringify({reason: err.reason});
