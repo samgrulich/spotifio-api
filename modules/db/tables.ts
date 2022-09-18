@@ -1,9 +1,10 @@
 // deno-lint-ignore-file no-explicit-any
 import { Table, DynamoDatabase } from "./dynamodb.ts";
-import { Image, Playlist, User } from "./types.ts";
-import { GetCommandInput, UpdateCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
+import { Chunk, Image, ISnapshot, Playlist, User } from "./types.ts";
+import { GetCommandInput, UpdateCommandInput, BatchGetCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
 // deno-lint-ignore no-unused-vars
 import { noIP, noToken, noUser, invalidIP, invalidToken, invalid, missing, checkObject } from "./errors.ts";
+import { Snapshot } from "../vc/snaps.ts";
 
 export interface UserInput
 {
@@ -195,9 +196,85 @@ export class Users extends Table
   }
 }
 
-export class Snapshots extends Table
+export class Tracks extends Table
 {
 
+}
+
+export class Snapshots extends Table
+{
+  constructor(database: DynamoDatabase)
+  {
+    super("Snapshots", database);
+  }
+
+  async get(query: {userId: string, snapId: string}): Promise<ISnapshot> {
+    // request the ISnapshot raw data
+    
+    const params: GetCommandInput = {
+      TableName: this.name,
+      Key: {
+        userId: query.userId,
+        snapId: query.snapId
+      }
+    }
+
+    const data = await super.getCmd(params);
+    const snap = data?.data as ISnapshot;
+    return snap ?? {};
+  }
+
+  async getPointers(query: {userId: string, data: [{snapId: string, pointerId: string}]})
+  {
+    const array = query.data.map(oneQuery => [oneQuery.snapId, oneQuery.pointerId]);
+    const keys = array
+      .map(([key, _]) => key) // get only snapshot ids
+      .filter((key, index, self) => index === self.indexOf(key)); // delete duplicates
+
+    const queries = keys.map(key => {
+        const keyPair = {
+          userId: query.userId,
+          snapId: key,
+        }
+
+        return keyPair;
+      }); 
+   
+    // return object of pointerIds sorted under snapIds 
+    const pointersSorted = Object.fromEntries(keys.map((key) => {
+      const data = array
+        .filter(pair => pair[0] == key)
+        .map(pair => pair[1]);
+      return [key, data];
+    }));
+
+    // const data = await this.batchGetCmd(params);
+    const promises = queries.map(key => {
+      return this.get(key);
+    })
+
+    const parsedPointers: Record<string, Chunk> = {};
+    await Promise.all(promises)
+      .then(
+        (snaps) => {
+          snaps.forEach((snap) => {
+            snap = snap ?? {};
+            const thisSnapPointers = pointersSorted[snap.snapId];
+            const chunks = snap.chunks ?? {};
+            
+            Object.entries(chunks).forEach(([chunkId, chunk]) => {
+              if(thisSnapPointers.includes(chunkId))
+                parsedPointers[chunkId] = chunk
+            });
+          })
+        }
+      );
+    return parsedPointers;
+  }
+
+  insert(query: Snapshot) {
+    // parse pointers
+  }
 }
 
 export class Schedule extends Table

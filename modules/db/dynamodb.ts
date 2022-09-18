@@ -5,8 +5,8 @@ import { DynamoDBClient,
   ExecuteStatementCommand, ExecuteStatementCommandInput } from "@aws-sdk/client-dynamodb@3.169.0";
 
 import { DynamoDBDocumentClient, 
-  PutCommand, GetCommand, UpdateCommand, DeleteCommand,
-  PutCommandInput, GetCommandInput, UpdateCommandInput, DeleteCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
+  PutCommand, GetCommand, UpdateCommand, DeleteCommand, BatchGetCommand, 
+  PutCommandInput, GetCommandInput, UpdateCommandInput, DeleteCommandInput, BatchGetCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
 
 // import { Command } from "@aws-sdk/smithy-client?dts";
 
@@ -156,6 +156,17 @@ export class Table
     try {
       const data = await this.database.documentClient.send(new GetCommand(params));
       return data.Item;
+    } catch (err) {
+      console.log("Error", err);
+      throw 404;
+    }
+  }
+
+  protected async batchGetCmd(params: BatchGetCommandInput)
+  {
+    try {
+      const data = await this.database.documentClient.send(new BatchGetCommand(params));
+      return Object.values(data.Responses ?? {})[0];
     } catch (err) {
       console.log("Error", err);
       throw 404;
