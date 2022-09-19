@@ -1,10 +1,11 @@
 // deno-lint-ignore-file no-explicit-any
 import { Table, DynamoDatabase } from "./dynamodb.ts";
 import { Chunk, Image, ISnapshot, Playlist, User } from "./types.ts";
-import { GetCommandInput, UpdateCommandInput, BatchGetCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
+import { GetCommandInput, UpdateCommandInput, BatchGetCommandInput, PutCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
 // deno-lint-ignore no-unused-vars
 import { noIP, noToken, noUser, invalidIP, invalidToken, invalid, missing, checkObject } from "./errors.ts";
 import { Snapshot } from "../vc/snaps.ts";
+import { getValueFromTextNode } from "https://esm.sh/v94/@aws-sdk/smithy-client@3.168.0/dist-types/get-value-from-text-node.d.ts";
 
 export interface UserInput
 {
@@ -224,7 +225,7 @@ export class Snapshots extends Table
     return snap ?? {};
   }
 
-  async getPointers(query: {userId: string, data: [{snapId: string, pointerId: string}]})
+  async getPointers(query: {userId: string, data: {snapId: string, pointerId: string}[]})
   {
     const array = query.data.map(oneQuery => [oneQuery.snapId, oneQuery.pointerId]);
     const keys = array
@@ -272,12 +273,71 @@ export class Snapshots extends Table
     return parsedPointers;
   }
 
-  insert(query: Snapshot) {
+  async insert(query: Snapshot) {
     // parse pointers
+    const params: PutCommandInput = {
+      TableName: this.name,
+      Item: query
+    }
+    
+    const _data = await super.putCmd(params);
   }
 }
 
 export class Schedule extends Table
 {
-  // init function 
+  dayCount = 73; // how much days the DB stores
+
+  constructor(database: DynamoDatabase)
+  {
+    super("Schedule", database);
+  }
+
+  // init()
+  // {
+  //   const days = Array(this.dayCount).map((_, index) => index);
+  //   days.forEach(this.putCmd())
+  // }
+
+  get todayIndex()
+  {
+    const now = Date.now();
+    const dayIndex = Math.floor(now / 8.64e7) % this.dayCount; 
+    return dayIndex;
+  }
+
+  pushPlaylists(query: {playlists: Array<string>})
+  {
+
+    const promises = query.playlists.map((playlist) => {
+      const params: UpdateCommandInput = {
+        TableName: this.name,
+        Key: {
+          id: this.todayIndex,
+        },
+        // ProjectionExpression: projection,
+        UpdateExpression: `SET ids[]=:p`,
+        ExpressionAttributeValues: {
+          ":p": playlist
+        },
+      }
+
+      this.updateCmd(params);
+    })
+
+    Promise.all(promises);
+  }
+
+  get today()
+  {
+    const params: GetCommandInput = {
+      TableName: this.name,
+      Key: {
+        id: this.todayIndex,
+      }
+    };
+
+    const data = this.getCmd(params);
+    return data;
+  }
 }

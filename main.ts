@@ -2,7 +2,7 @@ import "dotenv/load.ts";
 
 import { Application, Router, Context } from "oak";
 import { DynamoDatabase } from "./modules/db/dynamodb.ts";
-import { Users } from "./modules/db/tables.ts";
+import { Schedule, Snapshots, Users } from "./modules/db/tables.ts";
 import { createUser, generateToken, loginUser } from "./routes/auth/base.ts";
 import { IError } from "./modules/errors.ts";
 
@@ -17,12 +17,20 @@ const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
 
 const database = new DynamoDatabase(REGION); 
 const users = new Users(database);
+const schedule = new Schedule(database);
+const snaphots = new Snapshots(database);
 
 function return404(ctxt: Context)
 {
   ctxt.response.status = 404;
   ctxt.response.type = "application/json; charset=utf-8";
   ctxt.response.body = JSON.stringify({msg: "There's been an error :)"});
+}
+
+async function parseJson(ctxt: Context)
+{
+  const data = await ctxt.request.body({type: "json"}).value;
+  return data;
 }
 
 const router = new Router();
@@ -72,6 +80,29 @@ router
 
     loginUser(users, userData);
     respond(ctxt, "Logged in", "login", 202);
+  })
+  .post("/versions/schedule", async (ctxt) => {
+    const data = await parseJson(ctxt);
+    const ids: Array<string> = data["ids"];
+
+    schedule.pushPlaylists({playlists: ids});
+  })
+  .post("/versions/snapshots", async (ctxt) => {
+    const data = await parseJson(ctxt);
+    const userId = ctxt.response.headers.get("X-UserId");
+    const ids = data["ids"];
+
+    if (!userId)
+    {
+      respond(ctxt, "User not logged in", "noLogin", 402);
+      return;
+    }
+
+     
+
+  })
+  .get("/versions/snapshots", (ctxt) => {
+
   });
 
 

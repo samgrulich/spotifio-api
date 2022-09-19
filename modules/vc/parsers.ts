@@ -5,9 +5,17 @@ import { ISnapshot, ISnapshotShort, Playlist, SnapshotDifferenceData } from "../
 import { Snapshot } from "./snaps.ts";
 
 
-function parseSnapshot()
+export async function parseSnapshot(snaps: Snapshots, input: ISnapshot)
 {
+  const snap = new Snapshot(input);
+  const pointers = Object.entries(snap.pointers)
+      .map(([chunkId, snapId]) => {
+        return {"pointerId": chunkId, "snapId": snapId};
+      });
 
+  const chunks = await snaps.getPointers({userId: snap.userId, data: pointers});
+  snap.chunks = chunks;
+  return {snap, chunks};
 }
 
 export function snapshotFromPlaylist(userId: string, playlist: Playlist, addSnapshotInplace=true)
