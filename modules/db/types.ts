@@ -139,7 +139,7 @@ export class SnapshotDifferenceData
 
         return isSame;
       })
-      .map(chunk => [chunk.hashed, originPointers[chunk.hashed]]);
+      .map((chunk, index) => [chunk.hashed, originPointers[index]]);
 
     const pointersArr = samePointers.concat(newPointers);
     // todo not the pretties of codes but it get the job done

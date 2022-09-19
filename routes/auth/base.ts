@@ -1,4 +1,4 @@
-import { Users, UserInput } from "../../modules/db/tables.ts";
+import { Users, UserInput, Schedule } from "../../modules/db/tables.ts";
 
 
 export interface AuthOutput
@@ -12,8 +12,9 @@ export function generateToken(): string
   return token;
 }
 
-export function createUser(table: Users, userData: UserInput)
+export function createUser(table: Users, schedule: Schedule, userData: UserInput)
 {
+  schedule.pushPlaylists({ids: [userData.id]});
   table.insert(userData);
 }
 

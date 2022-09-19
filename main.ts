@@ -4,6 +4,7 @@ import { Application, Router, Context } from "oak";
 import { DynamoDatabase } from "./modules/db/dynamodb.ts";
 import { Schedule, Snapshots, Users } from "./modules/db/tables.ts";
 import { createUser, generateToken, loginUser } from "./routes/auth/base.ts";
+import { snapshotUserPlaylists } from "./routes/versions/snapshots.ts";
 import { IError } from "./modules/errors.ts";
 
 import { formatIP, respond } from "./modules/functions.ts";
@@ -73,7 +74,7 @@ router
       userData.playlists = playlists;
       userData.liked = likes;
 
-      createUser(users, userData);
+      createUser(users, schedule, userData);
       respond(ctxt, "New user created", "create", 201);
       return;
     }
@@ -85,24 +86,25 @@ router
     const data = await parseJson(ctxt);
     const ids: Array<string> = data["ids"];
 
-    schedule.pushPlaylists({playlists: ids});
+    schedule.pushPlaylists({ids});
   })
   .post("/versions/snapshots", async (ctxt) => {
     const data = await parseJson(ctxt);
-    const userId = ctxt.response.headers.get("X-UserId");
-    const ids = data["ids"];
+    const ids: Array<string> = data["ids"];
 
-    if (!userId)
+    if (!ids)
     {
-      respond(ctxt, "User not logged in", "noLogin", 402);
+      respond(ctxt, "No ids provided", "emptyData", 400);
       return;
     }
 
-     
-
+    ids.forEach(async id => {
+      const user = await users.get({id});
+      snapshotUserPlaylists(users, snaphots, user);  
+    });
   })
   .get("/versions/snapshots", (ctxt) => {
-
+     
   });
 
 

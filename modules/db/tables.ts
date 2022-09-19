@@ -5,7 +5,6 @@ import { GetCommandInput, UpdateCommandInput, BatchGetCommandInput, PutCommandIn
 // deno-lint-ignore no-unused-vars
 import { noIP, noToken, noUser, invalidIP, invalidToken, invalid, missing, checkObject } from "./errors.ts";
 import { Snapshot } from "../vc/snaps.ts";
-import { getValueFromTextNode } from "https://esm.sh/v94/@aws-sdk/smithy-client@3.168.0/dist-types/get-value-from-text-node.d.ts";
 
 export interface UserInput
 {
@@ -158,10 +157,11 @@ export class Users extends Table
     // return status;
   }
 
-  async update(query: {params?: UpdateCommandInput, id: string, expression: string, names: Record<string, string>, values: Record<string, any>})
+  async update(query: {params?: UpdateCommandInput, id: string, expression: string, names?: Record<string, string>, values?: Record<string, any>})
   {
     let projection = "";
-    Object.keys(query.names).forEach((key: string) => {
+    const names = query.names ?? {}; 
+    Object.keys(names).forEach((key: string) => {
       projection += key;
     })
 
@@ -223,6 +223,11 @@ export class Snapshots extends Table
     const data = await super.getCmd(params);
     const snap = data?.data as ISnapshot;
     return snap ?? {};
+  }
+
+  async getChunk(query: {userId: string, snapId: string, chunkId: string})
+  {
+
   }
 
   async getPointers(query: {userId: string, data: {snapId: string, pointerId: string}[]})
@@ -306,19 +311,19 @@ export class Schedule extends Table
     return dayIndex;
   }
 
-  pushPlaylists(query: {playlists: Array<string>})
+  pushPlaylists(query: {ids: Array<string>})
   {
 
-    const promises = query.playlists.map((playlist) => {
+    const promises = query.ids.map((id) => {
       const params: UpdateCommandInput = {
         TableName: this.name,
         Key: {
           id: this.todayIndex,
         },
         // ProjectionExpression: projection,
-        UpdateExpression: `SET ids[]=:p`,
+        UpdateExpression: `SET ids[]=:u`,
         ExpressionAttributeValues: {
-          ":p": playlist
+          ":u": id
         },
       }
 
