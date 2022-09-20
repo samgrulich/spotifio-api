@@ -4,7 +4,7 @@ import { Chunk, Image, ISnapshot, Playlist, User } from "./types.ts";
 import { GetCommandInput, UpdateCommandInput, BatchGetCommandInput, PutCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
 // deno-lint-ignore no-unused-vars
 import { noIP, noToken, noUser, invalidIP, invalidToken, invalid, missing, checkObject } from "./errors.ts";
-import { Snapshot } from "../vc/snaps.ts";
+import { Snapshot } from "../vc/types.ts";
 
 export interface UserInput
 {
@@ -225,9 +225,26 @@ export class Snapshots extends Table
     return snap ?? {};
   }
 
-  async getChunk(query: {userId: string, snapId: string, chunkId: string})
+  async getChunk(query: {userId: string, snapId: string, chunkIndex: number})
   {
+    const params: GetCommandInput = {
+      TableName: this.name,
+      Key: {
+        id: query.userId,
+      },
+      ProjectionExpression: `chunks[${query.chunkIndex}]`,
+    }
 
+    const data = await this.getCmd(params)
+      .catch((err) => {
+        console.log(err); 
+        throw err;
+      });
+    
+    if (!data)
+      throw invalid("chunk");
+    
+    return Promise.resolve(data?.data);
   }
 
   async getPointers(query: {userId: string, data: {snapId: string, pointerId: string}[]})
@@ -259,19 +276,16 @@ export class Snapshots extends Table
       return this.get(key);
     })
 
-    const parsedPointers: Record<string, Chunk> = {};
+    const parsedPointers: Array<Chunk> = [];
     await Promise.all(promises)
       .then(
         (snaps) => {
           snaps.forEach((snap) => {
             snap = snap ?? {};
             const thisSnapPointers = pointersSorted[snap.snapId];
-            const chunks = snap.chunks ?? {};
-            
-            Object.entries(chunks).forEach(([chunkId, chunk]) => {
-              if(thisSnapPointers.includes(chunkId))
-                parsedPointers[chunkId] = chunk
-            });
+            const chunks = snap.chunks ?? [];
+
+            parsedPointers.concat(chunks.filter(chunk => thisSnapPointers.includes(chunk.hashed)));
           })
         }
       );

@@ -1,4 +1,4 @@
-import { Chunk, Color, Image, ISnapshot, SnapshotDifferenceData, TrackShort } from "../db/types.ts";
+import { Chunk, Color, Image, ISnapshot, TrackShort } from "../db/types.ts";
 import { digest } from "../functions.ts";
 
 
@@ -55,7 +55,7 @@ export class Snapshot implements ISnapshot
   creationDate: Date;
   tracks: Array<TrackShort>;
   removedTracks: Array<TrackShort>;
-  chunks: Record<string, Chunk>;
+  chunks: Array<Chunk>;
   pointers: Record<string, string>;
   cover: Array<Image>;
 
@@ -71,7 +71,7 @@ export class Snapshot implements ISnapshot
     creationDate: Date,
     tracks?: Array<TrackShort>,
     removedTracks?: Array<TrackShort>,
-    chunks?: Record<string, Chunk>,
+    chunks?: Array<Chunk>,
     pointers?: Record<string, string>,
     cover: Array<Image>
   })
@@ -87,7 +87,7 @@ export class Snapshot implements ISnapshot
     this.creationDate = data.creationDate;
     this.tracks = data.tracks ?? [];
     this.removedTracks = data.removedTracks ?? [];
-    this.chunks = data.chunks ?? {};
+    this.chunks = data.chunks ?? [];
     this.pointers = data.pointers ?? {};
     this.cover = data.cover;
 
@@ -197,4 +197,63 @@ export class Snapshot implements ISnapshot
   {
     return this.hash;
   }
+}
+
+export class SnapshotDifferenceData
+{
+  sameChunks: Array<Chunk>; // add string variable
+  changedChunks: Array<Chunk>;
+  newChunks: Array<Chunk>; 
+  removedTracks: Array<TrackShort>;
+  originSnap: ISnapshot;
+
+  constructor(input: {originSnap: ISnapshot, sameChunks: Array<string>, changedChunks: Array<Chunk>, 
+    newChunks: Array<Chunk>, removedTracks: Array<TrackShort>})
+  {
+    this.originSnap = input.originSnap;
+    this.changedChunks = input.changedChunks;
+    this.newChunks = input.newChunks;
+    this.removedTracks = input.removedTracks;
+
+    const originChunks = Object.entries(input.originSnap.chunks ?? {});
+    const sameChunks = originChunks
+      .filter(([key, _]) => {
+        input.sameChunks.includes(key)
+      }).map(([_, Chunk]) => {
+        return Chunk;
+      });
+    this.sameChunks = sameChunks;
+  }
+
+  get pointers()
+  {
+    const originPointers = Object.entries(this.originSnap.pointers ?? {});
+    const originPointerKeys = Object.keys(this.originSnap.pointers ?? {});
+    const newPointers: Array<Array<string>> = [];
+
+    // return same pointers to the original snap {hash(chunkId), snapId}
+    const samePointers = this.sameChunks
+      .filter(chunk => {
+        const isSame = originPointerKeys.includes(chunk.hashed);
+
+        if(!isSame)
+          newPointers.push([chunk.hashed, this.originSnap.snapId]);
+
+        return isSame;
+      })
+      .map((chunk, index) => [chunk.hashed, originPointers[index]]);
+
+    const pointersArr = samePointers.concat(newPointers);
+    // todo not the pretties of codes but it get the job done
+    const pointers = Object.fromEntries(pointersArr);
+    return pointers; 
+  }
+
+  // get changedChunks()
+  // {
+  //   const chunksArr = this.changedChunks.map(chunk => [chunk.hashed, chunk]);
+  //   const chunks: Record<string, Chunk> = Object.fromEntries(chunksArr);
+    
+  //   return chunks;
+  // }
 }

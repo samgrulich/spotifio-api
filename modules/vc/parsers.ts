@@ -1,8 +1,8 @@
 // messing with pointers 
 
 import { Snapshots } from "../db/tables.ts";
-import { ISnapshot, ISnapshotShort, Playlist, SnapshotDifferenceData } from "../db/types.ts"
-import { Snapshot } from "./snaps.ts";
+import { ISnapshot, Playlist } from "../db/types.ts"
+import { Snapshot } from "./types.ts";
 
 
 export async function parseSnapshot(snaps: Snapshots, input: ISnapshot)

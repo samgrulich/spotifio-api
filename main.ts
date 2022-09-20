@@ -5,6 +5,7 @@ import { DynamoDatabase } from "./modules/db/dynamodb.ts";
 import { Schedule, Snapshots, Users } from "./modules/db/tables.ts";
 import { createUser, generateToken, loginUser } from "./routes/auth/base.ts";
 import { snapshotUserPlaylists } from "./routes/versions/snapshots.ts";
+import { Chunk } from "./modules/db/types.ts";
 import { IError } from "./modules/errors.ts";
 
 import { formatIP, respond } from "./modules/functions.ts";
@@ -80,7 +81,7 @@ router
     }
 
     loginUser(users, userData);
-    respond(ctxt, "Logged in", "login", 202);
+    respond(ctxt, "Logged in", "login", 202); // todo: send the auth data back to user
   })
   .post("/versions/schedule", async (ctxt) => {
     const data = await parseJson(ctxt);
@@ -103,8 +104,15 @@ router
       snapshotUserPlaylists(users, snaphots, user);  
     });
   })
-  .get("/versions/snapshots", (ctxt) => {
-     
+  .get("/versions/snapshots", async (ctxt) => {
+    const data = await parseJson(ctxt);
+    const userId: string = data["userId"];
+    const snapId: string = data["snapId"];
+    const chunkIndex: number = data["chunkIndex"] || 0; 
+
+    const chunk: Chunk = await snaphots.getChunk({userId, snapId, chunkIndex});
+
+    // todo: send chunk data back 
   });
 
 
