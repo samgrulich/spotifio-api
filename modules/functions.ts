@@ -21,11 +21,22 @@ export function formatIP(ip: string): string
   return ip.replaceAll(".", "-");
 }
 
-export function respond(ctxt: Context, msg: string, action: string, status:number=200)
+export function respondError(ctxt: Context, msg: string, reason: string, status=400)
 {
   ctxt.response.status = status;
   ctxt.response.headers.set("Content-Type", "application/json");
-  ctxt.response.body = JSON.stringify({msg, action});
+  ctxt.response.body = JSON.stringify({
+    msg,
+    reason
+  })
+}
+
+export function respond(ctxt: Context, options: {data?: any, cookies?: any, status?: number})
+{
+  //add cookies support
+  ctxt.response.status = options.status ?? 200;
+  ctxt.response.headers.set("Content-Type", "application/json");
+  ctxt.response.body = JSON.stringify(options.data);
 }
 
 export function digest(data: any, algorithm: DigestAlgorithm = "SHA-1"): string

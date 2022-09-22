@@ -84,7 +84,7 @@ export class Users extends Table
         throw invalidIP;
       });
 
-    return Promise.resolve("success");
+    return Promise.resolve(true);
   }
 
   async getSpotifyToken(query: {userId: string, token: string})

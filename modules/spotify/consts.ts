@@ -1,3 +1,5 @@
+import "dotenv/load.ts";
+
 const SCOPES = "user-read-private user-read-email playlist-modify-private playlist-read-private";
 
 const ACC_API_URL = "https://accounts.spotify.com/api";

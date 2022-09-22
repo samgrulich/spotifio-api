@@ -2,9 +2,9 @@ import { Context } from "oak";
 import { API_AUTH, API_TOKEN_URL, SCOPES } from "../../modules/spotify/consts.ts";
 import { Tokens } from "../../modules/spotify/base.ts";
 
-export function connect(ctxt: Context)
+export function connect(uiUrl: string)
 {
-  const url = new URL(ctxt.request.url);
+  const url = new URL(uiUrl);
   const state = crypto.randomUUID().replaceAll("-", "").substring(0, 16);
   const data = {
     "client_id": Deno.env.get("CLIENT_ID") || "",
@@ -19,7 +19,7 @@ export function connect(ctxt: Context)
   const spotifyURL = "https://accounts.spotify.com/authorize";
   const queryURL = `${spotifyURL}?${params}`;
 
-  ctxt.response.redirect(queryURL);
+  return queryURL;
 }
 
 
@@ -32,20 +32,22 @@ function parseCallbackParams(params: URLSearchParams)
   }
 
   const code = params.get("code");
+  const state = params.get("state");
 
-  return code;
+  return {code, state};
 }
 
-export async function callback(ctxt: Context)
+export async function callback(ctxt: Context, uiUrl: string)
 {
   const url = new URL(ctxt.request.url);
+  const uiURL = new URL(uiUrl);
   const params: URLSearchParams = url.searchParams;
 
-  const code = parseCallbackParams(params);
+  const { code, state } = parseCallbackParams(params);
   const data = {
     grant_type: "authorization_code",
     code: code || "",
-    redirect_uri: `${url.origin}/auth/callback`,
+    redirect_uri: `${uiURL.origin}/auth/callback`,
   };
 
   const tokens = await fetch(API_TOKEN_URL, {

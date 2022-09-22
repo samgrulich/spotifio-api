@@ -9,16 +9,31 @@ const HEADERS = {
 export async function get(url: string | URL, headers: Record<string, string>=HEADERS)
 {
   // no error handling
-  const resp = await fetch(new URL(url, API_URL), {
+  const data = await fetch(new URL(url, API_URL), {
     method: "GET",
     cache: "no-cache",
     headers: headers,
-  }).catch((err) => {
-    console.log(err);
-    throw {status: 503, reason: "Spotify connection failed"};
-  });
+  })
+    .then(async (response) => {
+      const data = await response.json(); 
 
-  return await resp.json();
+      if (data["error"])
+      {
+        const err = data["error"]
+        throw {status: err["status"], reason: "Spotify connection failed", msg: err["message"]};
+      }
+
+      return data;
+    })
+    .catch((err) => {
+      // console.log(err);
+      if(err["msg"])
+        throw err;
+
+      throw {status: 503, reason: "Spotify connection failed"};
+    });
+
+  return data; 
 }
 
 export async function post(url: string | URL, data: Record<string, string>, headers: Record<string, string>=HEADERS)
@@ -29,12 +44,27 @@ export async function post(url: string | URL, data: Record<string, string>, head
     cache: "no-cache",
     headers: headers,
     body: new URLSearchParams(data),
-  }).catch((err) => {
-    console.log(err);
-    throw {status: 503, reason: "Spotify connection failed"};
-  });
+  }) 
+    .then(async (response) => {
+      const data = await response.json(); 
 
-  return await resp.json(); 
+      if (data["error"])
+      {
+        const err = data["error"]
+        throw {status: err["status"], reason: "Spotify connection failed", msg: err["message"]};
+      }
+
+      return data;
+    })
+    .catch((err) => {
+      // console.log(err);
+      if(err["msg"])
+        throw err;
+
+      throw {status: 503, reason: "Spotify connection failed"};
+    });
+
+  return resp; 
 }
 
 export async function getAll<T = any>(url: string | URL, headers?: Record<string, string>): Promise<Array<T>>
@@ -87,15 +117,13 @@ export class Tokens
 
   get accessToken()
   {
-    const now = Date.now() / 1000;
-    
-    if (now < this.timeToLive)
+    if (0 < this.timeToLive)
       return this.#accessToken;
       
     const resp = post('refresh', {refresh_token: this.refreshToken});
     resp.then((data) => {
       this.#accessToken = data["access_token"];
-      this.#timeToLive = data["expires_in"];
+      this.#timeToLive = Number(data["expires_in"]);
       this.#timeStamp = Date.now() / 1000;
       
       return this.#accessToken;
@@ -111,7 +139,7 @@ export class Tokens
   protected get authHeaders()
   {
     return {
-      Authorization: `Brearer ${this.accessToken}`
+      Authorization: `Bearer ${this.accessToken}`
     }
   }
 
