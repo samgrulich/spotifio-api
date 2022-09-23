@@ -4,9 +4,11 @@ import { Album, AlbumShort, Artist, Color, Playlist, Track } from "../db/types.t
 import { Tokens } from "./base.ts";
 
 
-export function parseMultiple(query: Record<string, any>, parser: Function)
+export async function parseMultiple(query: {elements: Array<any>, options?:Array<any>}, parser: Function)
 {
-  return query.map((rawElement: Record<string, any>) => parser(rawElement));
+  const promises = query.elements.map((rawElement: Record<string, any>) => parser(rawElement, ...(query.options ?? [])));
+  const data = await Promise.all(promises);
+  return data;
 }
 
 export function parseArtist(query: Record<string, any>): Artist
@@ -15,7 +17,7 @@ export function parseArtist(query: Record<string, any>): Artist
     id: query["id"],
     uri: query["uri"],
     name: query["name"],
-    followers: query["followers"]["total"],
+    // followers: query["followers"]["total"],
     genres: query["genres"],
     cover: query["images"],
     popularity: query["popularity"],
@@ -49,6 +51,11 @@ export function parseTrack(query: Record<string, any>): Track
   }
 
   return track;
+}
+
+export function parseDatedTrack(query: Record<string, any>): Track
+{
+  return parseTrack(query["track"]);
 }
 
 export function parseTracks(query: Record<string, any>): Array<Track>
@@ -92,7 +99,8 @@ export async function retriveTracks(url: string | URL, tokens?: Tokens): Promise
   if(tokens)
   {
     const rawTracks = await tokens.getAll(url);
-    return parseTracks(rawTracks);
+    const tracks = rawTracks.map(rawTrack => rawTrack["track"])
+    return parseTracks(tracks);
   }
 
   return []
@@ -108,7 +116,7 @@ export async function parsePlaylist(query: Record<string, any>, tokens?: Tokens)
     uri: query["uri"],
     name: query["name"],
     description: query["description"],
-    followers: query["followers"]["total"],
+    // followers: query["followers"]["total"],
     public: query["public"],
     color: Color.white,
     tracks: tracks,

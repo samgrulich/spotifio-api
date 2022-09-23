@@ -1,6 +1,6 @@
 import "dotenv/load.ts";
 
-const SCOPES = "user-read-private user-read-email playlist-modify-private playlist-read-private";
+const SCOPES = "user-read-private user-read-email playlist-modify-private playlist-read-private user-library-read";
 
 const ACC_API_URL = "https://accounts.spotify.com/api";
 const API_AUTH = "Basic " + btoa(Deno.env.get("CLIENT_ID") + ":" + Deno.env.get("CLIENT_SECRET"));

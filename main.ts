@@ -12,7 +12,7 @@ import { formatIP, respond, respondError } from "./modules/functions.ts";
 
 // import { newUser } from "./routes/auth.ts";
 import {connect, callback} from "./routes/auth/spotify.ts";
-import { parseMultiple, parsePlaylist, parseTrack, parseUser } from "./modules/spotify/parsers.ts";
+import { parseMultiple, parsePlaylist, parseDatedTrack, parseUser } from "./modules/spotify/parsers.ts";
 
 
 const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
@@ -58,9 +58,11 @@ router
   })
   .get("/auth/connect", (ctxt) => {
     // check if user is logged in => return already signed in error 
+    console.log("connect");
     respond(ctxt, {data: {url: connectURL}});
   })
   .get("/auth/callback", async (ctxt) => {
+    console.log("callback");
     const isLogged = ctxt.response.headers.get("X-Logged");
     if (isLogged == "true") 
     {
@@ -71,13 +73,13 @@ router
     
     const {tokens, userData} = await callback(ctxt, uiUrl)
       .then(async (tokens) => {
-        console.log("tokens", tokens);
+        // console.log("tokens", tokens);
         const spotifyUser = await tokens.get("me");
 
         const ip = formatIP(ctxt.request.ip);
         const token = generateToken();
 
-        console.log("User", spotifyUser);
+        // console.log("User", spotifyUser);
         const userData = parseUser(spotifyUser, tokens.refreshToken, ip, token);
 
         return {tokens, userData};
@@ -91,8 +93,8 @@ router
       const rawLikes = await tokens.getAll("me/tracks");
 
       // parse spotify data to io(my) data
-      const playlists = parseMultiple(rawPlaylists, parsePlaylist);
-      const likes = parseMultiple(rawLikes, parseTrack);
+      const playlists = await parseMultiple({elements: rawPlaylists, options: [tokens]}, parsePlaylist);
+      const likes = await parseMultiple({elements: rawLikes}, parseDatedTrack);
 
       userData.playlists = playlists;
       userData.liked = likes;

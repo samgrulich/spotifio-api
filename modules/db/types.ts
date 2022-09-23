@@ -39,7 +39,7 @@ export interface Playlist
   uri: string;
   name: string;
   description: string;
-  followers: number;
+  // followers: number;
   public: boolean;
   color: Color;
   tracks: Array<Track>;
@@ -55,7 +55,7 @@ export interface ISnapshot
   name: string;
   previousSnap: string;
   description: string;
-  followers: number;
+  // followers: number;
   public: boolean;
   color: Color;
   creationDate: Date;
@@ -102,7 +102,7 @@ export interface Artist
   id: string;
   uri: string;
   name: string;
-  followers: number;
+  // followers: number;
   genres: Array<string>;
   cover: Array<Image>;
   popularity: number; 

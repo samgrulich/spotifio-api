@@ -114,8 +114,7 @@ export class Users extends Table
      
   async insert(query: UserInput) 
   {
-    const authPair: Record<string, string> = {};
-    authPair[query.ip] = query.token;
+    const authPair: Record<string, string> = {[query.ip]: query.token};
 
     const user: User = {
       id: query.id,
@@ -341,7 +340,7 @@ export class Schedule extends Table
         },
       }
 
-      this.updateCmd(params);
+      return this.updateCmd(params);
     })
 
     Promise.all(promises);

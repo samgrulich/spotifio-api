@@ -9,6 +9,7 @@ const HEADERS = {
 export async function get(url: string | URL, headers: Record<string, string>=HEADERS)
 {
   // no error handling
+  console.log(url, headers);
   const data = await fetch(new URL(url, API_URL), {
     method: "GET",
     cache: "no-cache",
@@ -69,30 +70,30 @@ export async function post(url: string | URL, data: Record<string, string>, head
 
 export async function getAll<T = any>(url: string | URL, headers?: Record<string, string>): Promise<Array<T>>
 {
-  const resp = await get(url);
-  const batchLimit = 50;
+  const resp = await get(url, headers);
   const lastLimit = resp["limit"];
-  const total = resp["total"] - lastLimit; 
+  const batchLimit = lastLimit; // 50
+  const total = resp["total"]; 
   const totalBatches = total / batchLimit;
   const result = [resp["items"]];
   const responses = [];
 
-  for (let i = 0; i < totalBatches; i++)
+  for (let i = 1; i < totalBatches; i++)
   {
-    const batchURL = new URL(url);
+    const batchURL = new URL(url, API_URL);
     batchURL.searchParams.set("offset", (i * batchLimit).toString());
     batchURL.searchParams.set("limit", batchLimit.toString());
 
     responses.push(get(batchURL, headers));
   }
 
-  Promise.all(responses).then((values) => {
+  await Promise.all(responses).then((values) => {
     values.map((resp) => {
       result.push(resp["items"]);
     });
   })
   
-  return result;
+  return result.flat();
 }
 
 export class Tokens 
@@ -139,7 +140,8 @@ export class Tokens
   protected get authHeaders()
   {
     return {
-      Authorization: `Bearer ${this.accessToken}`
+      "Authorization": `Bearer ${this.accessToken}`,
+      "Content-Type": "application/json",
     }
   }
 
