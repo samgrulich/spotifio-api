@@ -1,6 +1,6 @@
 import "dotenv/load.ts";
 
-import { Application, Router, Context } from "oak";
+import { Application, Router, Context, Middleware, Status} from "oak";
 import { DynamoDatabase } from "./modules/db/dynamodb.ts";
 import { Schedule, Snapshots, Users } from "./modules/db/tables.ts";
 import { createUser, generateToken, loginUser } from "./routes/auth/base.ts";
@@ -36,6 +36,19 @@ async function parseJson(ctxt: Context)
 {
   const data = await ctxt.request.body({type: "json"}).value;
   return data;
+}
+
+const errorHandlerMiddleware: Middleware = async(ctxt, next) => {
+  try
+  {
+    await next();
+  }
+  catch (error: unknown)
+  {
+    const message = error instanceof Error ? error.message : error; 
+    console.log(message);
+    ctxt.throw(Status.InternalServerError, JSON.stringify(message)); 
+  }
 }
 
 const router = new Router();
@@ -137,28 +150,7 @@ router
 
 const app = new Application();
 app
-  .use(async (ctxt, next) => {
-    // error handler
-    ctxt.response.headers.set("Content-Type", "application/json");
-    
-    // TODO: look if this (.then) is possible
-    try
-    {
-      await next();
-    }
-    catch(err)
-    {
-      console.log("Err middleware", err);
-      ctxt.response.status = err.status;
-      ctxt.response.body = JSON.stringify({reason: err.reason});
-    }
-    // next()
-    //   .catch((err: IError) => {
-    //     console.log("Err middleware", err);
-    //     ctxt.response.status = err.status;
-    //     ctxt.response.body = JSON.stringify({reason: err.reason});
-    //   });
-  })  
+  .use(errorHandlerMiddleware)  
   .use(async (ctxt, next) => {
     // token validation
     const headers = ctxt.request.headers;
