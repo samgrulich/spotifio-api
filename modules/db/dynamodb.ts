@@ -144,6 +144,7 @@ export class Table
   {
     try {
       const data = await this.database.documentClient.send(new PutCommand(params));
+      console.log("putting", params, "\n result ", data);
       return data;
     } catch (err) {
       console.log("Error", err);

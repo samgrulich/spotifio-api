@@ -311,11 +311,21 @@ export class Schedule extends Table
     super("Schedule", database);
   }
 
-  // init()
-  // {
-  //   const days = Array(this.dayCount).map((_, index) => index);
-  //   days.forEach(this.putCmd())
-  // }
+  async init()
+  {
+    const days = Array.from(Array(this.dayCount).keys());
+    await days.forEach(async (day) => {
+      const params: PutCommandInput = {
+        TableName: this.name,
+        Item: {
+          index: day,
+          ips: []
+        }
+      };
+      
+      await this.putCmd(params);
+    });
+  }
 
   get todayIndex()
   {
@@ -326,17 +336,17 @@ export class Schedule extends Table
 
   pushPlaylists(query: {ids: Array<string>})
   {
-
+    // console.log(this.todayIndex);
     const promises = query.ids.map((id) => {
       const params: UpdateCommandInput = {
         TableName: this.name,
         Key: {
-          id: this.todayIndex,
+          index: this.todayIndex,
         },
         // ProjectionExpression: projection,
-        UpdateExpression: `SET ids[]=:u`,
+        UpdateExpression: `SET ids=:u`,
         ExpressionAttributeValues: {
-          ":u": id
+          ":u": [id]
         },
       }
 

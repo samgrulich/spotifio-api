@@ -9,7 +9,7 @@ const HEADERS = {
 export async function get(url: string | URL, headers: Record<string, string>=HEADERS)
 {
   // no error handling
-  console.log(url, headers);
+  // console.log(url, headers);
   const data = await fetch(new URL(url, API_URL), {
     method: "GET",
     cache: "no-cache",
@@ -30,7 +30,7 @@ export async function get(url: string | URL, headers: Record<string, string>=HEA
       // console.log(err);
       if(err["msg"])
         throw err;
-
+      console.log(err);
       throw {status: 503, reason: "Spotify connection failed"};
     });
 

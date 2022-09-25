@@ -58,11 +58,11 @@ router
   })
   .get("/auth/connect", (ctxt) => {
     // check if user is logged in => return already signed in error 
-    console.log("connect");
+    // console.log("connect");
     respond(ctxt, {data: {url: connectURL}});
   })
   .get("/auth/callback", async (ctxt) => {
-    console.log("callback");
+    // console.log("callback");
     const isLogged = ctxt.response.headers.get("X-Logged");
     if (isLogged == "true") 
     {
@@ -89,21 +89,25 @@ router
     if(!userId || userId != userData.id)
     {
       // get users playlists and likes
-      const rawPlaylists = await tokens.getAll("me/playlists");
-      const rawLikes = await tokens.getAll("me/tracks");
+      // const rawPlaylists = await tokens.getAll("me/playlists");
+      // const rawLikes = await tokens.getAll("me/tracks");
 
-      // parse spotify data to io(my) data
-      const playlists = await parseMultiple({elements: rawPlaylists, options: [tokens]}, parsePlaylist);
-      const likes = await parseMultiple({elements: rawLikes}, parseDatedTrack);
+      // // parse spotify data to io(my) data
+      // const playlists = await parseMultiple({elements: rawPlaylists, options: [tokens]}, parsePlaylist);
+      // const likes = await parseMultiple({elements: rawLikes}, parseDatedTrack);
 
-      userData.playlists = playlists;
-      userData.liked = likes;
+      // userData.playlists = playlists;
+      // userData.liked = likes;
 
+      const user = JSON.parse(Deno.readTextFileSync("./user.json"));
+
+      userData.liked = [];
       const responseData = {
         id: userId,
-        token: userData.token,
+        token: user.token,
       }
-      createUser(users, schedule, userData);
+
+      createUser(users, schedule, user);
       // respond(ctxt, "New user created", "create", 201);
       respond(ctxt, {data: responseData, status: 201})
       return;
@@ -147,6 +151,8 @@ router
     const chunk: Chunk = await snaphots.getChunk({userId, snapId, chunkIndex});
 
     // todo: send chunk data back 
+  }).get("/init", async (ctxt) => {
+    // await schedule.init();
   });
 
 
