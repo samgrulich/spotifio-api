@@ -1,5 +1,3 @@
-import { digest } from "../functions.ts";
-
 export enum Color
 {
   white,
@@ -19,13 +17,13 @@ export interface Image
   height: string;
 }
 
-export interface User
+export interface IUser
 {
   id: string;
   name: string;
   refreshToken: string;
   ips: Record<string, string>;
-  playlists: Array<Playlist>;
+  // playlists: Array<Playlist>;
   likes: Array<string>;
   superLikes: Array<string>;
   cover: Array<Image>;
@@ -33,120 +31,108 @@ export interface User
   // billing info
 }
 
-export interface Playlist
+export interface IPlaylistShort
 {
   id: string;
-  uri: string;
+  lastSnap: string; 
+}
+
+export interface IPlaylist
+{
+  id: string;
   name: string;
   description: string;
-  // followers: number;
   public: boolean;
   color: Color;
-  tracks: Array<Track>;
-  snaps: Array<ISnapshotShort>;
+  snaps: Record<string, ISnapshotShort>; // date: snap
   cover: Array<Image>;
 }
 
-export interface ISnapshot
+export interface IChunkData
 {
-  userId: string; 
-  snapId: string;
-  hash?: string;
-  name: string;
-  previousSnap: string;
-  description: string;
-  // followers: number;
-  public: boolean;
-  color: Color;
-  creationDate: Date;
-  tracks?: Array<TrackShort>;
-  removedTracks?: Array<TrackShort>;
-  chunks?: Array<Chunk>;
-  pointers?: Record<string, string>; // id of chunk, id of snap
-  cover: Array<Image>;
-}
-
-export class Chunk
-{
+  hash: string;
   length: number;
-  tracks: Array<TrackShort>;
+  tracks: Array<string>;
+}
 
-  constructor(tracks: Array<TrackShort>)
-  {
-    this.tracks = tracks;
-    this.length = tracks.length;
-  }
+export interface IChunk
+{
+  hash: string;
+  data?: IChunkData,
+  isPointer: boolean,
+  origin?: string,
+}
 
-  get hashed()
-  {
-    return digest(this.tracks);
-  }
-
-  get trackIds()
-  {
-    return this.tracks.map(track => track.id);
-  }
+export interface IChunks
+{
+  chunks: Array<IChunk>;
+  removed: Array<IChunk>;
+  pointers: Record<string, string>; // chunkId: snpaId 
 }
 
 export interface ISnapshotShort
 {
   userId: string;
-  snapId: string;
-  hash?: string;
+  hash: string;
   name: string;
   creationDate: Date;
 }
 
-export interface Artist
+export interface ISnapshot
+{
+  userId: string; 
+  hash: string;
+  name: string;
+  previousSnap: string;
+  description: string;
+  public: boolean;
+  color: Color;
+  creationDate: Date;
+  cover: Array<Image>;
+  chunks: IChunks; 
+}
+
+export interface IArtistShort
 {
   id: string;
-  uri: string;
   name: string;
-  // followers: number;
+}
+
+export interface IArtist
+{
+  id: string;
+  name: string;
   genres: Array<string>;
   cover: Array<Image>;
   popularity: number; 
 }
 
-export interface Album
+export interface IAlbumShort
 {
   id: string;
-  uri: string;
+  name: string;
+}
+
+export interface IAlbum
+{
+  id: string;
   name: string;
   totalTracks: number;
   releaseDate: Date;
-  aviableMarkets: Array<string>;
+  // aviableMarkets: Array<string>;
   cover: Array<Image>;
-  restrictions?: {reason: string};
-  artists: Array<Artist>;
+  // restrictions?: {reason: string};
+  artists: Array<IArtistShort>;
 }
 
-export interface AlbumShort
+export interface ITrack
 {
   id: string;
-  name: string;
-}
-
-export interface Track
-{
-  id: string;
-  uri: string;
   name: string;
   discNumber: number;
   duration: number;
   explicit: boolean;
-  aviableMarkets: Array<string>;
-  album: AlbumShort;
-  artists: Array<Artist>;
+  album: IAlbumShort;
+  artists: Array<IArtistShort>;
   cover: Array<Image>;
-}
-
-export class TrackShort
-{
-  id: string;
-
-  constructor(id: string)
-  {
-    this.id = id;
-  }
 }

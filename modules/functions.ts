@@ -1,6 +1,7 @@
 import { Context } from "oak";
 import { crypto } from "crypto"; 
 import { DigestAlgorithm } from "./deps.ts";
+import { IChunk } from "./db/types.ts";
 
 export function splitCookies(cookie: string): Record<string, string>
 {
@@ -50,4 +51,9 @@ export function digest(data: any, algorithm: DigestAlgorithm = "SHA-1"): string
 
   const hashedText = decoder.decode(hashed);
   return hashedText;
+}
+
+export function hashChunks(input: {chunks: Array<IChunk>, date: Date})
+{
+  return digest(input);
 }

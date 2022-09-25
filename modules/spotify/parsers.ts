@@ -1,8 +1,13 @@
 // deno-lint-ignore-file ban-types no-explicit-any
 import { UserInput } from "../db/tables.ts";
-import { Album, AlbumShort, Artist, Color, Playlist, Track } from "../db/types.ts";
+import { IAlbum, IAlbumShort, IArtist, Color, IPlaylist, ITrack, IArtistShort, IPlaylistShort } from "../db/types.ts";
 import { Tokens } from "./base.ts";
 
+
+const SPOTIFY_KEYS: Record<string, string> = {
+  "images": "cover",
+  "duration_ms": "duration"
+}
 
 export async function parseMultiple(query: {elements: Array<any>, options?:Array<any>}, parser: Function)
 {
@@ -11,120 +16,120 @@ export async function parseMultiple(query: {elements: Array<any>, options?:Array
   return data;
 }
 
-export function parseArtist(query: Record<string, any>): Artist
+/**
+ * Goes through the SPOTIFY_KEYS table and replaces spotify keys with mine
+ * @param spotifyKey 
+ * @returns 
+ */
+export function parseKey(spotifyKey: string)
 {
-  const artist = { 
-    id: query["id"],
-    uri: query["uri"],
-    name: query["name"],
-    // followers: query["followers"]["total"],
-    genres: query["genres"],
-    cover: query["images"],
-    popularity: query["popularity"],
-  }
-
-  return artist;
+  if (Object.keys(SPOTIFY_KEYS).includes(spotifyKey))
+    return SPOTIFY_KEYS[spotifyKey];
+  
+  return spotifyKey;
 }
 
-export function parseArtists(query: Record<string, any>): Array<Artist>
+/**
+ * Converts string to mixedCase 
+ * @param spotifyFormatKey 
+ * @returns 
+ */
+export function convertKey(spotifyFormatKey: string, parse=true)
 {
-  return query.map((rawArtist: Record<string, any>) => parseArtist(rawArtist));
+  const parsedKey = parse ? parseKey(spotifyFormatKey) : spotifyFormatKey;
+
+  const parts = parsedKey.split("_");
+  const convertedParts = parts.map((value, index) => {
+    if (index == 0)
+      return;
+    
+    const capitalized = value[0].toUpperCase + value.substring(1);
+    return capitalized; 
+  });
+  const key = convertedParts.toString();
+  return key;
 }
 
-export function parseTrack(query: Record<string, any>): Track
+/**
+ * Converts the keys for every entry and then parses value into long or short type 
+ * @param spotifyObject 
+ * @param isLong 
+ * @returns 
+ */
+export function convertObject<LongType, ShortType>(spotifyObject: Record<string, any>, isLong=false)
 {
-  const album = parseAlbumShort(query["album"]);
-  const rawArtists = query["artists"];
-  const artists: Array<Artist> = parseArtists(rawArtists); 
-
-  const track: Track = {
-    id: query["id"],
-    uri: query["uri"],
-    name: query["name"],
-    discNumber: query["disc_number"],
-    duration: query["duration_ms"],
-    explicit: query["explicit"],
-    aviableMarkets: query["aviable_markets"],
-    album: album,
-    artists: artists,
-    cover: query["images"],
-  }
-
-  return track;
+  const entries = Object.entries(spotifyObject);
+  const convertedEntries = entries.map(([key, value]) => [convertKey(key), isLong ? value as LongType : value as ShortType]);
+  return Object.fromEntries(convertedEntries);
 }
 
-export function parseDatedTrack(query: Record<string, any>): Track
+export function parseArtist(query: Record<string, any>, isLong=false): IArtist | IArtistShort
 {
-  return parseTrack(query["track"]);
+  return convertObject(query, isLong);
 }
 
-export function parseTracks(query: Record<string, any>): Array<Track>
+export function parseArtists(query: Record<string, any>, isLong=false): Array<IArtist | IArtistShort>
 {
-  return query.map((rawTrack: Record<string, any>) => parseTrack(rawTrack));
+  return query.map((rawArtist: Record<string, any>) => parseArtist(rawArtist, isLong));
 }
 
-export function parseAlbumShort(query: Record<string, any>): AlbumShort
+export function parseTrack(query: Record<string, any>, isLong=false): ITrack | string
 {
-  const albumShort: AlbumShort = {
-    id: query["id"],
-    name: query["name"],
-  }
+  const album = parseAlbum(query["album"], false);
+  const artists = parseArtists(query["artists"], false);
 
-  return albumShort;
+  const data = {...query, album, artists};
+
+  return convertObject(data, isLong);
 }
 
-export function parseAlbum(query: Record<string, any>): Album
+export function parseDatedTrack(query: Record<string, any>, isLong=false): ITrack | string
 {
-  const rawReleaseDate = query["release_date"];
+  return parseTrack(query["track"], isLong);
+}
+
+export function parseTracks(query: Record<string, any>, isLong=false): Array<ITrack | string>
+{
+  return query.map((rawTrack: Record<string, any>) => parseTrack(rawTrack, isLong));
+}
+
+export function parseAlbum(query: Record<string, any>, isLong=false): IAlbum | IAlbumShort
+{
   // const releaseDatePrecision = query["release_date_precision"];
-  const releaseDate = new Date(rawReleaseDate); 
-  const artists = parseArtists(query["artists"]);
+  const releaseDate = new Date(query["release_date"]); 
+  const artists = parseArtists(query["artists"], true);
 
-  const album: Album = {
-    id: query["id"],
-    name: query["name"],
-    uri: query["uri"],
-    totalTracks: query["total_tracks"],
-    releaseDate: releaseDate,
-    aviableMarkets: query["aviable_markets"],
-    cover: query["images"],
-    artists: artists,
-  }
+  delete query["release_date"];
 
-  return album;
+  const data = {...query, releaseDate, artists};
+  return convertObject(data, isLong);
 }
 
-export async function retriveTracks(url: string | URL, tokens?: Tokens): Promise<Array<Track>>
+export async function retriveTracks(url: string | URL, tokens?: Tokens, isLong=true): Promise<Array<ITrack>>
 {
   if(tokens)
   {
     const rawTracks = await tokens.getAll(url);
     const tracks = rawTracks.map(rawTrack => rawTrack["track"])
-    return parseTracks(tracks);
+    return parseTracks(tracks, isLong) as Array<ITrack>;
   }
 
   return []
 }
 
-export async function parsePlaylist(query: Record<string, any>, tokens?: Tokens): Promise<Playlist>
+export async function parsePlaylist(query: Record<string, any>, tokens?: Tokens, isLong=false, longTracks=false): Promise<IPlaylist | IPlaylistShort>
 {
   const tracksUrl = new URL(query["tracks"]["href"])
-  const tracks = await retriveTracks(tracksUrl, tokens);
+  const tracks = await retriveTracks(tracksUrl, tokens, longTracks);
 
-  const playlist: Playlist = {
-    id: query["id"],
-    uri: query["uri"],
-    name: query["name"],
-    description: query["description"],
-    // followers: query["followers"]["total"],
-    public: query["public"],
+  const data = {
+    ...query,
     color: Color.white,
-    tracks: tracks,
     snaps: [],
-    cover: query["images"],
+    tracks
   }
 
-  return playlist;
+  return convertObject(data);
 }
 
 export function parseUser(query: Record<string, any>, refreshToken: string, ip: string, token: string): UserInput

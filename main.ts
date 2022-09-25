@@ -5,8 +5,8 @@ import { DynamoDatabase } from "./modules/db/dynamodb.ts";
 import { Schedule, Snapshots, Users } from "./modules/db/tables.ts";
 import { createUser, generateToken, loginUser } from "./routes/auth/base.ts";
 import { snapshotUserPlaylists } from "./routes/versions/snapshots.ts";
-import { Chunk } from "./modules/db/types.ts";
-import { IError } from "./modules/errors.ts";
+// import { IChunk } from "./modules/db/types.ts";
+// import { IError } from "./modules/errors.ts";
 
 import { formatIP, respond, respondError } from "./modules/functions.ts";
 
