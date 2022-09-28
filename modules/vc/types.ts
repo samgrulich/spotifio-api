@@ -145,7 +145,7 @@ export class Snapshot implements ISnapshot
     this.cover = input.cover;
 
     this.chunks = input.chunks;
-    this.chunkIds = input.chunks.chunks.map(chunk => chunk.hash);
+    this.chunkIds = Object.values(input.chunks.chunks).map(chunk => chunk.hash);
   }
 
   compare(other: ISnapshot)
@@ -191,7 +191,7 @@ export class Snapshot implements ISnapshot
 
   get hash(): string 
   {
-    const hashed = hashChunks({chunks: this.chunks.chunks, date: this.creationDate});
+    const hashed = hashChunks({chunks: Object.values(this.chunks.chunks), date: this.creationDate});
     return hashed;
   }
 }

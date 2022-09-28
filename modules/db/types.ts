@@ -66,7 +66,7 @@ export interface IChunk
 
 export interface IChunks
 {
-  chunks: Array<IChunk>; //suggestion 
+  chunks: Record<string, IChunk>; //suggestion 
   removed: Array<IChunk>;
   pointers: Record<string, string>; // chunkId: {snapId, chunkIndex}
   lastChunk: string;

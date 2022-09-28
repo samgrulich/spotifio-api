@@ -54,17 +54,19 @@ export function iChunksFromDifference(added: Array<Chunk>, overlap?: Array<strin
   // todo add 0th chunk case
   const chunks = addedChunks.concat(pointers ?? []);
   const connectedChunks = chunks.map((chunk, index, array) => {
-    if (index == 0)
-      return chunk; 
+    if (index != 0)
+      chunk.previousChunk = array[index - 1].hash;
 
-    chunk.previousChunk = array[index - 1].hash;
-    return chunk;
+    return [chunk.hash, chunk];
   })
+
+  const chunksMap = Object.fromEntries(connectedChunks);
+
   const iChunks: IChunks = {
-    chunks: connectedChunks,
+    chunks: chunksMap,
     removed: removedChunks ?? [],
     pointers: pointersMap,
-    lastChunk: connectedChunks.at(-1)?.hash ?? "0",
+    lastChunk: chunks.at(-1)?.hash ?? "0",
   };
   const date = new Date();
   const hash = hashChunks({chunks: chunks, date: date});
