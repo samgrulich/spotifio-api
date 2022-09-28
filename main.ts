@@ -3,7 +3,7 @@ import "dotenv/load.ts";
 import { Application, Router, Context, Middleware, Status} from "oak";
 import { DynamoDatabase } from "./modules/db/dynamodb.ts";
 import { Schedule, Snapshots, Users } from "./modules/db/tables.ts";
-import { createUser, generateToken, loginUser } from "./routes/auth/base.ts";
+import { createUser, loginUser } from "./routes/auth/base.ts";
 import { snapshotUserPlaylists } from "./routes/versions/snapshots.ts";
 // import { IChunk } from "./modules/db/types.ts";
 // import { IError } from "./modules/errors.ts";
@@ -11,8 +11,7 @@ import { snapshotUserPlaylists } from "./routes/versions/snapshots.ts";
 import { formatIP, respond, respondError, stripServerHeaders } from "./modules/functions.ts";
 
 // import { newUser } from "./routes/auth.ts";
-import {connect, callback, retriveUserData} from "./routes/auth/spotify.ts";
-import { parseMultiple, parsePlaylist, parseDatedTrack, parseUser } from "./modules/spotify/parsers.ts";
+import {connect, callback, retriveUserData, retriveAdditionalUserData} from "./routes/auth/spotify.ts";
 import { IChunk } from "./modules/db/types.ts";
 import { Exception } from "./modules/errors.ts";
 
@@ -95,37 +94,31 @@ router
     const userId = ctxt.response.headers.get("X-UserId");
     if(!userId || userId != userData.id)
     {
-      // get users playlists and likes
-      // const rawPlaylists = await tokens.getAll("me/playlists");
-      // const rawLikes = await tokens.getAll("me/tracks");
-
-      // // parse spotify data to io(my) data
-      // const playlists = await parseMultiple({elements: rawPlaylists, options: [tokens]}, parsePlaylist);
-      // const likes = await parseMultiple({elements: rawLikes}, parseDatedTrack);
+      // const {playlists, likes} = await retriveAdditionalUserData(tokens);
 
       // userData.playlists = playlists;
       // userData.liked = likes;
 
-      const user = JSON.parse(Deno.readTextFileSync("./user.json"));
+      const user = JSON.parse(Deno.readTextFileSync("./user2.json"));
 
-      userData.liked = [];
       const responseData = {
         id: userId,
         token: user.token,
+        spotifyToken: tokens.refreshToken,
       }
 
       createUser(users, schedule, user);
-      // respond(ctxt, "New user created", "create", 201);
       respond(ctxt, {data: responseData, status: 201})
       return;
     }
 
-    loginUser(users, userData);
-    // respond(ctxt, "Logged in", "login", 202); // todo: send the auth data back to user
     const responseData = {
       id: userId,
-      token: userData.token
+      token: userData.token,
+      spotifyToken: tokens.refreshToken,
     }
+
+    loginUser(users, userData);
     respond(ctxt, {data: responseData, status: 202})
   })
   .post("/versions/schedule", async (ctxt) => {

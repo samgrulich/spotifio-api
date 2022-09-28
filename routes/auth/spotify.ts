@@ -2,7 +2,7 @@ import { Context } from "oak";
 import { API_AUTH, API_TOKEN_URL, SCOPES } from "../../modules/spotify/consts.ts";
 import { Tokens } from "../../modules/spotify/base.ts";
 import { generateToken } from "./base.ts";
-import { parseUser } from "../../modules/spotify/parsers.ts";
+import { parseDatedTrack, parseMultiple, parsePlaylist, parseUser } from "../../modules/spotify/parsers.ts";
 
 export function connect(uiUrl: string)
 {
@@ -100,5 +100,13 @@ export async function retriveUserData(ip: string, tokens: Tokens)
 
 export async function retriveAdditionalUserData(tokens: Tokens)
 {
+  // get users playlists and likes
+  const rawPlaylists = await tokens.getAll("me/playlists");
+  const rawLikes = await tokens.getAll("me/tracks");
 
+  // parse spotify data to io(my) data
+  const playlists = await parseMultiple({elements: rawPlaylists, options: [tokens]}, parsePlaylist);
+  const likes = await parseMultiple({elements: rawLikes}, parseDatedTrack);
+
+  return {playlists, likes};
 }
