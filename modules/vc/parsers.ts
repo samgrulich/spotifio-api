@@ -1,4 +1,4 @@
-import { ISnapshot, IPlaylist, IChunks, IChunk, ISnapshotShort, IOrigin } from "../db/types.ts"
+import { ISnapshot, IPlaylist, IChunks, IChunk, ISnapshotShort } from "../db/types.ts"
 import { Chunk, Chunks, Snapshot } from "./types.ts";
 import { hashChunks } from "../functions.ts";
 
@@ -32,10 +32,11 @@ export function iChunksFromDifference(added: Array<Chunk>, overlap?: Array<strin
     return {
       hash: chunkId,
       isPointer: true,
-      origin
+      origin,
+      previousChunk: String,
     } as IChunk;
   });
-  const pointersMap = Object.fromEntries(pointers?.map(chunk => [chunk.hash, chunk.origin ?? {} as IOrigin]) ?? []);
+  const pointersMap = Object.fromEntries(pointers?.map(chunk => [chunk.hash, chunk.origin ?? ""]) ?? []);
   const removedChunks = removed?.map(chunkId => {
     return {
       hash: chunkId,
@@ -48,14 +49,16 @@ export function iChunksFromDifference(added: Array<Chunk>, overlap?: Array<strin
       hash: chunk.hash,
       data: chunk,
       isPointer: false,
+      previousChunk: chunk.previousChunk,
     } as IChunk;
   });
-
+  // todo add 0th chunk case
   const chunks = addedChunks.concat(pointers ?? []);
   const iChunks: IChunks = {
     chunks: chunks,
     removed: removedChunks ?? [],
-    pointers: pointersMap 
+    pointers: pointersMap,
+    lastChunk: string 
   };
   const date = new Date();
   const hash = hashChunks({chunks: chunks, date: date});

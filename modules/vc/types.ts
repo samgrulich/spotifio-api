@@ -34,11 +34,14 @@ function generateChunks(items: Array<string>, chunkSize: number): Array<Chunk>
     return [];
 
   const iterations = getIterations(items.length, chunkSize);
-  const chunks = iterations.map(start => {
+  
+  let lastChunk = "0";
+  const chunks = iterations.map((start) => {
     const end = start + chunkSize;
     const slice = items.slice(start, end);
 
-    const chunk = new Chunk(slice);
+    const chunk = new Chunk(slice, lastChunk);
+    lastChunk = chunk.hash;
     return chunk;
   });
 
@@ -49,11 +52,13 @@ export class Chunk implements IChunkData
 {
   length: number;
   tracks: Array<string>;
+  previousChunk: string;
 
-  constructor(tracks: Array<string>)
+  constructor(tracks: Array<string>, previous?: string)
   {
     this.tracks = tracks;
     this.length = tracks.length;
+    this.previousChunk = previous ?? "0";
   }
 
   get hash(): string
@@ -92,6 +97,14 @@ export class Chunks
     );
 
     return chunks;
+  }
+
+  get lastChunk(): string
+  {
+    const chunks = this.data;
+
+    return Object.keys(chunks).at(-1) ?? "0";
+
   }
 }
 
