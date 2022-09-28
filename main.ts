@@ -14,6 +14,7 @@ import { formatIP, respond, respondError, stripServerHeaders } from "./modules/f
 import {connect, callback, retriveUserData} from "./routes/auth/spotify.ts";
 import { parseMultiple, parsePlaylist, parseDatedTrack, parseUser } from "./modules/spotify/parsers.ts";
 import { IChunk } from "./modules/db/types.ts";
+import { Exception } from "./modules/errors.ts";
 
 
 const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
@@ -46,6 +47,18 @@ const errorHandlerMiddleware: Middleware = async(ctxt, next) => {
   }
   catch (error: unknown)
   {
+    if (error instanceof Exception)
+    {
+      const message = {
+        reason: error.reason,
+        name: error.name,
+        contents: error.contents, 
+      };
+
+      ctxt.throw(error.code, JSON.stringify(message));
+      return;
+    }
+
     const message = error instanceof Error ? error.message : error; 
     console.log(message);
     ctxt.throw(Status.InternalServerError, JSON.stringify(message)); 
