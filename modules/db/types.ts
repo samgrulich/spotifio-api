@@ -23,7 +23,7 @@ export interface IUser
   name: string;
   refreshToken: string;
   ips: Record<string, string>;
-  // playlists: Array<Playlist>;
+  playlists: Array<IPlaylist>;
   likes: Array<string>;
   superLikes: Array<string>;
   cover: Array<Image>;

@@ -117,7 +117,7 @@ export class Users extends Table
       name: query.name, 
       refreshToken: query.refreshToken,
       ips: authPair,
-      // playlists: query.playlists,
+      playlists: query.playlists,
       likes: query.liked,
       superLikes: [],
       cover: query.cover,
@@ -239,50 +239,6 @@ export class Snapshots extends Table
       throw invalid("chunk");
     
     return Promise.resolve(data?.data);
-  }
-
-  // todo: document
-  async getPointers(query: {userId: string, data: Array<{snapId: string, pointerId: string}>})
-  {
-    const array = query.data.map(oneQuery => [oneQuery.snapId, oneQuery.pointerId]);
-    const keys = array
-      .map(([key, _]) => key) // get only snapshot ids
-      .filter((key, index, self) => index === self.indexOf(key)); // delete duplicates
-
-    const queries = keys.map(key => {
-        return {
-          userId: query.userId,
-          snapId: key,
-        }
-      }); 
-   
-    // return object of pointerIds sorted under snapIds 
-    const pointersSorted = Object.fromEntries(keys.map((key) => {
-      const data = array
-        .filter(pair => pair[0] == key)
-        .map(pair => pair[1]);
-      return [key, data];
-    }));
-
-    // const data = await this.batchGetCmd(params);
-    const promises = queries.map(key => {
-      return this.get(key);
-    })
-
-    const parsedPointers: Array<IChunk> = [];
-    await Promise.all(promises)
-      .then(
-        (snaps) => {
-          snaps.forEach((snap) => {
-            snap = snap ?? {};
-            const thisSnapPointers = pointersSorted[snap.hash];
-            const chunks = snap.chunks ?? [];
-
-            parsedPointers.concat(Object.values(chunks.chunks).filter(chunk => thisSnapPointers.includes(chunk.hash)));
-          })
-        }
-      );
-    return parsedPointers;
   }
 
   async insert(query: Snapshot) {
