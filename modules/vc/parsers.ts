@@ -33,7 +33,6 @@ export function iChunksFromDifference(added: Array<Chunk>, overlap?: Array<strin
       hash: chunkId,
       isPointer: true,
       origin,
-      previousChunk: String,
     } as IChunk;
   });
   const pointersMap = Object.fromEntries(pointers?.map(chunk => [chunk.hash, chunk.origin ?? ""]) ?? []);
@@ -54,11 +53,18 @@ export function iChunksFromDifference(added: Array<Chunk>, overlap?: Array<strin
   });
   // todo add 0th chunk case
   const chunks = addedChunks.concat(pointers ?? []);
+  const connectedChunks = chunks.map((chunk, index, array) => {
+    if (index == 0)
+      return chunk; 
+
+    chunk.previousChunk = array[index - 1].hash;
+    return chunk;
+  })
   const iChunks: IChunks = {
-    chunks: chunks,
+    chunks: connectedChunks,
     removed: removedChunks ?? [],
     pointers: pointersMap,
-    lastChunk: string 
+    lastChunk: connectedChunks.at(-1)?.hash ?? "0",
   };
   const date = new Date();
   const hash = hashChunks({chunks: chunks, date: date});
@@ -83,8 +89,9 @@ export function snapshotFromPlaylist(userId: string, playlist: IPlaylist, tracks
     const iChunks = iChunksFromDifference(difference.added, difference.overlap, difference.removed, previous);
     const snapshotData = {
       ...baseData,
-      previousSnap: iChunks.hash,
-      chunks: iChunks.chunks
+      previousSnap: previousSnap.hash,
+      chunks: iChunks.chunks,
+      hash: iChunks.hash,
     };
     return snapshotData;
   }
