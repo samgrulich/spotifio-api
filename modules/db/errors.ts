@@ -1,14 +1,14 @@
-import { IError } from "../errors.ts";
+import { Status } from "http-status";
+import { Exception, errMessage } from "../errors.ts";
 
-const errMessage = (reason: string, status: number): IError => ({reason, status});
-const missing = (msg: string): IError => errMessage(`No ${msg} passed`, 400);
-const invalid = (msg: string): IError => errMessage(`Invalid ${msg}`, 403);
+const missing = (msg: string) => errMessage(`missing_${msg}`, `No ${msg} passed`, Status.BadRequest);
+const invalid = (msg: string) => errMessage(`invalid_${msg}`, `Invalid ${msg}`, Status.Forbidden);
 
 const checkObject = (object: Record<string, any>) => 
 {
   Object.keys(object).forEach((key) => {
-    if (!key) 
-      throw missing(key);
+    if (!key)
+      throw new Exception(Status.BadRequest, "missing_key", [key])
   })
 
 }

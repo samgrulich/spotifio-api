@@ -32,6 +32,14 @@ export function respondError(ctxt: Context, msg: string, reason: string, status=
   })
 }
 
+export function stripServerHeaders(ctxt: Context)
+{
+  const headers = Array.from(ctxt.response.headers.keys());
+  const serverHeaders = headers.filter(header => header.startsWith("X-"));
+
+  serverHeaders.forEach(headerKey => ctxt.response.headers.delete(headerKey));
+}
+
 export function respond(ctxt: Context, options: {data?: any, cookies?: any, status?: number})
 {
   //add cookies support

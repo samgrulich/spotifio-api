@@ -1,6 +1,8 @@
 import { Context } from "oak";
 import { API_AUTH, API_TOKEN_URL, SCOPES } from "../../modules/spotify/consts.ts";
 import { Tokens } from "../../modules/spotify/base.ts";
+import { generateToken } from "./base.ts";
+import { parseUser } from "../../modules/spotify/parsers.ts";
 
 export function connect(uiUrl: string)
 {
@@ -21,7 +23,6 @@ export function connect(uiUrl: string)
 
   return queryURL;
 }
-
 
 function parseCallbackParams(params: URLSearchParams)
 {
@@ -85,4 +86,19 @@ export async function callback(ctxt: Context, uiUrl: string)
   // send userdata to store in session storage
   // store the userid in localstorage with given session length
   // resp.headers.set("Set-Cookie", `${strCookies}; SameSite=Strict; Max-Age=${604800}`);
+}
+
+export async function retriveUserData(ip: string, tokens: Tokens)
+{
+  const spotifyUser = await tokens.get("me");
+  const token = generateToken();
+
+  const userData = parseUser(spotifyUser, tokens.refreshToken, ip, token);
+
+  return userData;
+}
+
+export async function retriveAdditionalUserData(tokens: Tokens)
+{
+
 }

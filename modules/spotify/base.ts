@@ -1,5 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
+import { connectionError, Exception } from "../errors.ts";
 import { API_URL, API_AUTH } from "./consts.ts";
+import { spotifyError } from "./errors.ts";
 
 const HEADERS = {
   "Authorization": API_AUTH,
@@ -19,19 +21,16 @@ export async function get(url: string | URL, headers: Record<string, string>=HEA
       const data = await response.json(); 
 
       if (data["error"])
-      {
-        const err = data["error"]
-        throw {status: err["status"], reason: "Spotify connection failed", msg: err["message"]};
-      }
+        throw data;
 
       return data;
     })
     .catch((err) => {
-      // console.log(err);
-      if(err["msg"])
-        throw err;
+      if(err["error"])
+        throw spotifyError(err["error"]);
+
       console.log(err);
-      throw {status: 503, reason: "Spotify connection failed"};
+      throw connectionError(err);
     });
 
   return data; 
@@ -50,19 +49,16 @@ export async function post(url: string | URL, data: Record<string, string>, head
       const data = await response.json(); 
 
       if (data["error"])
-      {
-        const err = data["error"]
-        throw {status: err["status"], reason: "Spotify connection failed", msg: err["message"]};
-      }
+        throw data;
 
       return data;
     })
     .catch((err) => {
-      // console.log(err);
-      if(err["msg"])
-        throw err;
+      if(err["error"])
+        throw spotifyError(err["error"]);
 
-      throw {status: 503, reason: "Spotify connection failed"};
+      console.log(err);
+      throw connectionError(err);
     });
 
   return resp; 
@@ -130,7 +126,7 @@ export class Tokens
       return this.#accessToken;
     }).catch((err) => {
       console.log(err);
-      throw {status: "Invalid token", reason: 403}
+      throw new Exception(403, "invalid_token", [err]);
     });
 
     // authenticate user or return not logged in page

@@ -7,6 +7,8 @@ import { DynamoDBClient,
 import { DynamoDBDocumentClient, 
   PutCommand, GetCommand, UpdateCommand, DeleteCommand, BatchGetCommand, 
   PutCommandInput, GetCommandInput, UpdateCommandInput, DeleteCommandInput, BatchGetCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
+import { Exception } from "../errors.ts";
+import { Status } from "http-status";
 
 // import { Command } from "@aws-sdk/smithy-client?dts";
 
@@ -95,7 +97,7 @@ export class DynamoDatabase
       if (data)
         return {status: 200, data: data.Items}
 
-      throw {status: 404}
+      throw new Exception(Status.NotFound, "database_failed", ["Couldn't execute statement"]);
     } catch (err) {
       console.error(err);
     }
@@ -148,7 +150,7 @@ export class Table
       return data;
     } catch (err) {
       console.log("Error", err);
-      throw 404;
+      throw new Exception(Status.NotFound, "database_failed", ["Invalid put command"]);
     }
   }
 
@@ -159,7 +161,7 @@ export class Table
       return data.Item;
     } catch (err) {
       console.log("Error", err);
-      throw 404;
+      throw new Exception(Status.NotFound, "database_failed", ["Invalid get command"]);
     }
   }
 
@@ -170,7 +172,7 @@ export class Table
       return Object.values(data.Responses ?? {})[0];
     } catch (err) {
       console.log("Error", err);
-      throw 404;
+      throw new Exception(Status.NotFound, "database_failed", ["Invalid batch Get command"]);
     }
   }
 
@@ -181,7 +183,7 @@ export class Table
       return data;
     } catch (err) {
       console.log("Error", err);
-      throw 404;
+      throw new Exception(Status.NotFound, "database_failed", ["Invalid update command"]);
     }
   }
 
@@ -192,7 +194,7 @@ export class Table
       return data;
     } catch (err) {
       console.log("Error", err);
-      throw 404;
+      throw new Exception(Status.NotFound, "database_failed", ["Invalid delete command"]);
     }
   }
 }

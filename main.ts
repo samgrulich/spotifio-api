@@ -8,11 +8,12 @@ import { snapshotUserPlaylists } from "./routes/versions/snapshots.ts";
 // import { IChunk } from "./modules/db/types.ts";
 // import { IError } from "./modules/errors.ts";
 
-import { formatIP, respond, respondError } from "./modules/functions.ts";
+import { formatIP, respond, respondError, stripServerHeaders } from "./modules/functions.ts";
 
 // import { newUser } from "./routes/auth.ts";
-import {connect, callback} from "./routes/auth/spotify.ts";
+import {connect, callback, retriveUserData} from "./routes/auth/spotify.ts";
 import { parseMultiple, parsePlaylist, parseDatedTrack, parseUser } from "./modules/spotify/parsers.ts";
+import { IChunk } from "./modules/db/types.ts";
 
 
 const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
@@ -71,16 +72,9 @@ router
       return;
     }
     
-    const {tokens, userData} = await callback(ctxt, uiUrl)
-      .then(async (tokens) => {
-        // console.log("tokens", tokens);
-        const spotifyUser = await tokens.get("me");
-
+    const {tokens, userData} = await callback(ctxt, uiUrl).then(async (tokens) => {
         const ip = formatIP(ctxt.request.ip);
-        const token = generateToken();
-
-        // console.log("User", spotifyUser);
-        const userData = parseUser(spotifyUser, tokens.refreshToken, ip, token);
+        const userData = await retriveUserData(ip, tokens);
 
         return {tokens, userData};
       });
@@ -148,7 +142,7 @@ router
     const snapId: string = data["snapId"];
     const chunkIndex: number = data["chunkIndex"] || 0; 
 
-    const chunk: Chunk = await snaphots.getChunk({userId, snapId, chunkIndex});
+    const chunk: IChunk = await snaphots.getChunk({userId, snapId, chunkIndex});
 
     // todo: send chunk data back 
   }).get("/init", async (ctxt) => {
@@ -195,6 +189,10 @@ app
     ctxt.response.headers.set("X-Token", token);
     ctxt.response.headers.set("X-Logged", "true"); 
     await next();
+  })
+  .use(async (ctxt, next) => {
+    await next();
+    stripServerHeaders(ctxt);
   })
   .use(router.routes())
   .use(router.allowedMethods())

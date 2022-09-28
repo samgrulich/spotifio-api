@@ -55,19 +55,25 @@ export interface IChunkData
   tracks: Array<string>;
 }
 
+export interface IOrigin
+{
+  snapId: string;
+  chunkIndex: number;
+}
+
 export interface IChunk
 {
   hash: string;
   data?: IChunkData,
   isPointer: boolean,
-  origin?: string,
+  origin?: IOrigin,
 }
 
 export interface IChunks
 {
-  chunks: Array<IChunk>;
+  chunks: Array<IChunk>; //suggestion 
   removed: Array<IChunk>;
-  pointers: Record<string, string>; // chunkId: snpaId 
+  pointers: Record<string, IOrigin>; // chunkId: {snapId, chunkIndex}
 }
 
 export interface ISnapshotShort

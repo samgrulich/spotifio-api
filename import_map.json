@@ -13,6 +13,8 @@
 
     "@aws-sdk/": "https://esm.sh/@aws-sdk/",
 
-    "dotenv/": "https://deno.land/x/dotenv@v3.2.0/"
+    "dotenv/": "https://deno.land/x/dotenv@v3.2.0/",
+    "http/": "https://deno.land/std@0.152.0/http",
+    "http-status": "https://deno.land/std@0.152.0/http/http_status.ts"
   }
 }
