@@ -146,15 +146,13 @@ router
     const data = await parseJson(ctxt);
     const userId: string = data["userId"];
     const snapId: string = data["snapId"];
-    const chunkIndex: number = data["chunkIndex"] || 0; 
+    const chunkId: string = data["chunkId"]; 
 
-    const chunk: IChunk = await snaphots.getChunk({userId, snapId, chunkIndex});
+    const chunk: IChunk = await snaphots.getChunk({userId, snapId, chunkId}, true);
 
+    respond(ctxt, {data: chunk});
     // todo: send chunk data back 
-  }).get("/init", async (ctxt) => {
-    // await schedule.init();
   });
-
 
 const app = new Application();
 app

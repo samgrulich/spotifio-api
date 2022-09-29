@@ -222,8 +222,9 @@ export class Snapshots extends Table
   }
 
   // todo: document 
-  async getChunk(query: {userId: string, snapId: string, chunkId: string}): Promise<IChunk>
+  async getChunk(query: {userId: string, snapId: string, chunkId: string}, parsePointer=false): Promise<IChunk>
   {
+    // request data from database
     const params: GetCommandInput = {
       TableName: this.name,
       Key: {
@@ -237,8 +238,24 @@ export class Snapshots extends Table
     
     if (!data)
       throw invalid("chunk");
+
+    // request additional data if pointer
+    const chunk: IChunk = data?.data;
+    if (!(chunk.isPointer && parsePointer))
+    {
+      if (!chunk.origin)
+        throw invalid("pointer");
+
+      const pointerQuery = {
+        ...query,
+        snapId: chunk.origin,
+      };
+
+      const pointer = await this.getChunk(pointerQuery, false);
+      chunk.data = pointer.data;
+    }
     
-    return Promise.resolve(data?.data);
+    return chunk;
   }
 
   async insert(query: Snapshot) {
