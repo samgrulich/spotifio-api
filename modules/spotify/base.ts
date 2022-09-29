@@ -99,11 +99,11 @@ export class Tokens
   #timeToLive: number;
   #timeStamp: number;
 
-  constructor(input: {refreshToken: string, accessToken: string, timeToLive: number, timeStamp?: number})
+  constructor(input: {refreshToken: string, accessToken?: string, timeToLive?: number, timeStamp?: number})
   {
     this.refreshToken = input.refreshToken;
-    this.#accessToken = input.accessToken;
-    this.#timeToLive = input.timeToLive;
+    this.#accessToken = input.accessToken ?? ""; 
+    this.#timeToLive = input.timeToLive ?? 0;
     this.#timeStamp = input.timeStamp ? input.timeStamp : Date.now() / 1000;
   }
 

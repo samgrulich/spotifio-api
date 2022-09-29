@@ -5,8 +5,8 @@ import { DynamoDBClient,
   ExecuteStatementCommand, ExecuteStatementCommandInput } from "@aws-sdk/client-dynamodb@3.169.0";
 
 import { DynamoDBDocumentClient, 
-  PutCommand, GetCommand, UpdateCommand, DeleteCommand, BatchGetCommand, 
-  PutCommandInput, GetCommandInput, UpdateCommandInput, DeleteCommandInput, BatchGetCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
+  PutCommand, GetCommand, UpdateCommand, DeleteCommand, BatchGetCommand, QueryCommand,
+  PutCommandInput, GetCommandInput, UpdateCommandInput, DeleteCommandInput, BatchGetCommandInput, QueryCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
 import { Exception } from "../errors.ts";
 import { Status } from "http-status";
 
@@ -195,6 +195,17 @@ export class Table
     } catch (err) {
       console.log("Error", err);
       throw new Exception(Status.NotFound, "database_failed", ["Invalid delete command"]);
+    }
+  }
+
+  protected async queryCmd(params: QueryCommandInput)
+  {
+    try {
+      const data = await this.database.documentClient.send(new QueryCommand(params));
+      return data;
+    } catch (err) {
+      console.log("Error", err);
+      throw new Exception(Status.NotFound, "database_failed", ["Invalid query command"]);
     }
   }
 }

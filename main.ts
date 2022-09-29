@@ -141,18 +141,50 @@ router
       const user = await users.get({id});
       snapshotUserPlaylists(users, snaphots, user);  
     });
+  });
+
+const secureRouter = new Router();
+secureRouter
+  .use(async (ctxt, next) => {
+    if (!ctxt.response.headers.has("X-Logged"))
+    {
+      respondError(ctxt, "Server error", "server_error", Status.InternalServerError);
+      return;
+    }
+    
+    if (ctxt.response.headers.get("X-Logged") != "true")
+    {
+      respondError(ctxt, "Authentication failed", "not_logged", Status.Forbidden);
+      return;
+    }
+
+    await next();
   })
-  .get("/versions/snapshots", async (ctxt) => {
-    const data = await parseJson(ctxt);
-    const userId: string = data["userId"];
-    const snapId: string = data["snapId"];
-    const chunkId: string = data["chunkId"]; 
+  .get("/versions/snapshots/chunk/:snapId/:chunkId", async (ctxt) => {
+    const userId = ctxt.response.headers.get("X-UserId") ?? "";
+    const { snapId, chunkId } = ctxt.params; 
 
     const chunk: IChunk = await snaphots.getChunk({userId, snapId, chunkId}, true);
 
     respond(ctxt, {data: chunk});
-    // todo: send chunk data back 
+  })
+  .get("/versions/snapshots/:date", async (ctxt) => {
+    const date = new Date(ctxt.params.date) || new Date();
+    const userId = ctxt.response.headers.get("X-UserId") ?? "";
+   
+    const snapshot = await snaphots.getDate({userId, date});
+
+    respond(ctxt, {data: snapshot});
+  })
+  .get("/versions/snapshots/detail/:snapId", async (ctxt) => {
+    const snapId = ctxt.params.snapId; 
+    const userId = ctxt.response.headers.get("X-UserId") ?? "";
+   
+    const snapshot = await snaphots.getDetails({userId, snapId});
+
+    respond(ctxt, {data: snapshot});
   });
+
 
 const app = new Application();
 app
@@ -200,6 +232,8 @@ app
   })
   .use(router.routes())
   .use(router.allowedMethods())
+  .use(secureRouter.routes())
+  .use(secureRouter.allowedMethods())
   .use((ctxt) => {
     return404(ctxt);
   });

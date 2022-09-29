@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { Table, DynamoDatabase } from "./dynamodb.ts";
 import { IChunk, Image, ISnapshot, IPlaylist, IUser } from "./types.ts";
-import { GetCommandInput, UpdateCommandInput, PutCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
+import { GetCommandInput, UpdateCommandInput, PutCommandInput, QueryCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
 // deno-lint-ignore no-unused-vars
 import { noIP, noToken, noUser, invalidIP, invalidToken, invalid, missing, checkObject } from "./errors.ts";
 import { Snapshot } from "../vc/types.ts";
@@ -192,12 +192,6 @@ export class Users extends Table
   }
 }
 
-export class Tracks extends Table
-{
-
-}
-
-// TODO: implement once again
 export class Snapshots extends Table
 {
   constructor(database: DynamoDatabase)
@@ -212,13 +206,59 @@ export class Snapshots extends Table
       TableName: this.name,
       Key: {
         userId: query.userId,
-        snapId: query.snapId
+        hash: query.snapId
       }
     }
 
     const data = await super.getCmd(params);
     const snap = data?.data as ISnapshot;
     return snap ?? {};
+  }
+
+  async getDetails(query: {userId: string, snapId: string})
+  {
+    const params: GetCommandInput = {
+      TableName: this.name,
+      Key: {
+        userId: query.userId,
+        hash: query.snapId
+      },
+      ProjectionExpression: "name, previousSnap, description, color, creationDate, cover"
+    };
+
+    const data = await this.getCmd(params);
+    if (!data)
+      throw invalid("snapshot");
+
+    return data;
+  }
+
+  async getDate(query: {userId: string, date: Date})
+  {
+    const startDate = query.date;
+    startDate.setDate(query.date.getDate() - 73);
+
+    const params: QueryCommandInput = {
+      TableName: this.name,
+      ExpressionAttributeNames: {
+        "#pKey": "userId",
+        "#sKey": "creationDate" 
+      },
+      ExpressionAttributeValues: {
+        ":userId": query.userId,
+        ":startDate": startDate,
+        ":endDate": query.date,
+      },
+      KeyConditionExpression: "#pKey = :userId AND #sKey BETWEEN :startDate AND :endDate",
+    }
+
+    const data = await this.queryCmd(params);
+    if (data.Count == 0)
+      throw missing("snapshots");
+
+    // if duplicates return the first one
+    const snaps = data.Items ?? {};
+    return snaps;
   }
 
   // todo: document 
@@ -235,7 +275,7 @@ export class Snapshots extends Table
     }
 
     const data = await this.getCmd(params);
-    
+ 
     if (!data)
       throw invalid("chunk");
 
