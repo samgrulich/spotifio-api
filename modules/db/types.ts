@@ -28,6 +28,7 @@ export interface IUser
   superLikes: Array<string>;
   cover: Array<Image>;
   contact: { email: string, telephone?: string, messenger?: string, prefered: string};
+  // creationDate: Date;
   // billing info
 }
 

@@ -233,7 +233,7 @@ export class Snapshots extends Table
     return data;
   }
 
-  async getDate(query: {userId: string, date: Date})
+  async getDate(query: {userId: string, date: Date}): Promise<Array<ISnapshot>>
   {
     const startDate = query.date;
     startDate.setDate(query.date.getDate() - 73);
@@ -253,11 +253,11 @@ export class Snapshots extends Table
     }
 
     const data = await this.queryCmd(params);
-    if (data.Count == 0)
+    if (!data.Count)
       throw missing("snapshots");
 
     // if duplicates return the first one
-    const snaps = data.Items ?? {};
+    const snaps: Array<ISnapshot> = data.Items as Array<ISnapshot> ?? [];
     return snaps;
   }
 

@@ -85,11 +85,11 @@ router
     }
     
     const {tokens, userData} = await callback(ctxt, uiUrl).then(async (tokens) => {
-        const ip = formatIP(ctxt.request.ip);
-        const userData = await retriveUserData(ip, tokens);
+      const ip = formatIP(ctxt.request.ip);
+      const userData = await retriveUserData(ip, tokens);
 
-        return {tokens, userData};
-      });
+      return {tokens, userData};
+    });
     
     const userId = ctxt.response.headers.get("X-UserId");
     if(!userId || userId != userData.id)
@@ -104,7 +104,7 @@ router
       const responseData = {
         id: userId,
         token: user.token,
-        spotifyToken: tokens.refreshToken,
+        // spotifyToken: tokens.refreshToken,
       }
 
       createUser(users, schedule, user);
