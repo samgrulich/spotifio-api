@@ -185,7 +185,6 @@ secureRouter
     respond(ctxt, {data: snapshot});
   });
 
-
 const app = new Application();
 app
   .use(errorHandlerMiddleware)  

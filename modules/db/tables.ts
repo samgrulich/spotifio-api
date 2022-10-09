@@ -230,7 +230,7 @@ export class Snapshots extends Table
     if (!data)
       throw invalid("snapshot");
 
-    return data;
+    return data as {name: string, previousSnap: string, description: string, color: string, creationDate: string, cover: Array<Image>};
   }
 
   async getDate(query: {userId: string, date: Date}): Promise<Array<ISnapshot>>
