@@ -11,7 +11,7 @@ import { snapshotUserPlaylists } from "./routes/versions/snapshots.ts";
 import { formatIP, respond, respondError, stripServerHeaders } from "./modules/functions.ts";
 
 // import { newUser } from "./routes/auth.ts";
-import {connect, callback, retriveUserData, retriveAdditionalUserData} from "./routes/auth/spotify.ts";
+import {connect, callback, retriveUserData} from "./routes/auth/spotify.ts";
 import { IChunk } from "./modules/db/types.ts";
 import { Exception } from "./modules/errors.ts";
 
@@ -46,6 +46,9 @@ const errorHandlerMiddleware: Middleware = async(ctxt, next) => {
   }
   catch (error: unknown)
   {
+    console.error(error);
+
+    ctxt.response.type = "json";
     if (error instanceof Exception)
     {
       const message = {
@@ -54,13 +57,14 @@ const errorHandlerMiddleware: Middleware = async(ctxt, next) => {
         contents: error.contents, 
       };
 
-      ctxt.throw(error.code, JSON.stringify(message));
+      ctxt.response.status = error.code;
+      ctxt.response.body = JSON.stringify(message);
       return;
     }
 
     const message = error instanceof Error ? error.message : error; 
-    console.log(message);
-    ctxt.throw(Status.InternalServerError, JSON.stringify(message)); 
+    ctxt.response.status = Status.InternalServerError;
+    ctxt.response.body = JSON.stringify({message});
   }
 }
 
@@ -99,10 +103,10 @@ router
       // userData.playlists = playlists;
       // userData.liked = likes;
 
-      const user = JSON.parse(Deno.readTextFileSync("./user2.json"));
+      const user = JSON.parse(Deno.readTextFileSync("./userData/user2.json"));
 
       const responseData = {
-        id: userId,
+        id: user.id,
         token: user.token,
         // spotifyToken: tokens.refreshToken,
       }
@@ -193,14 +197,15 @@ app
     const headers = ctxt.request.headers;
     let logged = false;
 
-    if (!headers.has("User-Id") || !headers.has("Token"))
+    if (!headers.has("UserId") || !headers.has("Token"))
     {
       ctxt.response.headers.set("X-Logged", "false");
+      console.warn("user not logged");
       await next(); 
       return;
     } 
     
-    const userId = headers.get("User-Id") || "";
+    const userId = headers.get("UserId") || "";
     const token = headers.get("Token") || "";
     const ip = formatIP(ctxt.request.ip);
     
@@ -215,6 +220,7 @@ app
     
     if (!logged)
     {
+      console.warn("token validation failed");
       ctxt.response.headers.set("X-Logged", "false");
       await next();
       return;

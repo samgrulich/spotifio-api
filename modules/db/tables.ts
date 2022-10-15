@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { Table, DynamoDatabase } from "./dynamodb.ts";
-import { IChunk, Image, ISnapshot, IPlaylist, IUser } from "./types.ts";
+import { IChunk, Image, ISnapshot, IPlaylist, IUser, IPlaylistShort } from "./types.ts";
 import { GetCommandInput, UpdateCommandInput, PutCommandInput, QueryCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
 // deno-lint-ignore no-unused-vars
 import { noIP, noToken, noUser, invalidIP, invalidToken, invalid, missing, checkObject } from "./errors.ts";
@@ -58,7 +58,7 @@ export class Users extends Table
     if (!data)
       throw invalid("user");
     
-    return Promise.resolve(data?.data);
+    return Promise.resolve(data?.ips[query.ip]);
   }
 
   validateToken(query: {userId: string, ip: string, token: string})
@@ -66,10 +66,8 @@ export class Users extends Table
     // checkObject(query);
 
     this.getToken(query)
-      .then((data) => {
-        const tokenDB = data.ips[query.ip];
-        
-        if (tokenDB != query.token)
+      .then((token) => {
+        if (token != query.token)
           throw invalidToken; 
       })
       .catch((err) => {
@@ -117,8 +115,8 @@ export class Users extends Table
       name: query.name, 
       refreshToken: query.refreshToken,
       ips: authPair,
-      playlists: query.playlists,
-      likes: query.liked,
+      playlists: query.playlists.map(playlist => ({id: playlist.id, lastSnap: Object.keys(playlist.snaps).at(-1) ?? "0"} as IPlaylistShort)),
+      // likes: query.liked,
       superLikes: [],
       cover: query.cover,
       contact: {email: query.email, prefered: "email"}

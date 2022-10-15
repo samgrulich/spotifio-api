@@ -24,7 +24,7 @@ export interface IUser
   refreshToken: string;
   ips: Record<string, string>;
   playlists: Array<IPlaylistShort>;
-  likes: Array<string>;
+  // likes: Array<string>;
   superLikes: Array<string>;
   cover: Array<Image>;
   contact: { email: string, telephone?: string, messenger?: string, prefered: string};
