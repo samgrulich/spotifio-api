@@ -8,11 +8,11 @@ import { snapshotUserPlaylists } from "./routes/versions/snapshots.ts";
 // import { IChunk } from "./modules/db/types.ts";
 // import { IError } from "./modules/errors.ts";
 
-import { formatIP, respond, respondError, stripServerHeaders } from "./modules/functions.ts";
+import { formatIP, respond, respondError, respondNotLogged, stripServerHeaders } from "./modules/functions.ts";
 
 // import { newUser } from "./routes/auth.ts";
 import {connect, callback, retriveUserData} from "./routes/auth/spotify.ts";
-import { IChunk } from "./modules/db/types.ts";
+import { IChunk, IUser } from "./modules/db/types.ts";
 import { Exception } from "./modules/errors.ts";
 
 
@@ -103,7 +103,8 @@ router
       // userData.playlists = playlists;
       // userData.liked = likes;
 
-      const user = JSON.parse(Deno.readTextFileSync("./userData/user2.json"));
+      const user = JSON.parse(Deno.readTextFileSync("./userData/user3.json"));
+      // const user = userData;
 
       const responseData = {
         id: user.id,
@@ -111,7 +112,7 @@ router
         // spotifyToken: tokens.refreshToken,
       }
 
-      createUser(users, schedule, user);
+      await createUser(users, snaphots, schedule, user);
       respond(ctxt, {data: responseData, status: 201})
       return;
     }
@@ -119,7 +120,7 @@ router
     const responseData = {
       id: userId,
       token: userData.token,
-      spotifyToken: tokens.refreshToken,
+      // spotifyToken: tokens.refreshToken,
     }
 
     loginUser(users, userData);
@@ -158,11 +159,25 @@ secureRouter
     
     if (ctxt.response.headers.get("X-Logged") != "true")
     {
-      respondError(ctxt, "Authentication failed", "not_logged", Status.Forbidden);
+      respondNotLogged(ctxt);
       return;
     }
 
     await next();
+  })
+  .get("/users/detail", async (ctxt) => {
+    const userId = ctxt.response.headers.get("X-UserId");
+
+    if (!userId)
+    {
+      respondNotLogged(ctxt);
+      return;
+    }
+
+    const userData: IUser = await users.get({id: userId});
+    userData.ips = {};
+    userData.refreshToken = "";
+    respond(ctxt, {data: userData});
   })
   .get("/versions/snapshots/chunk/:snapId/:chunkId", async (ctxt) => {
     const userId = ctxt.response.headers.get("X-UserId") ?? "";
@@ -200,7 +215,6 @@ app
     if (!headers.has("UserId") || !headers.has("Token"))
     {
       ctxt.response.headers.set("X-Logged", "false");
-      console.warn("user not logged");
       await next(); 
       return;
     } 

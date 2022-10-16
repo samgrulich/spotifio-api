@@ -72,20 +72,6 @@ export async function callback(ctxt: Context, uiUrl: string)
   });
 
   return tokens;
-  
-  // query spotify user data
-
-  // query database for user data
-  
-
-  // if new user
-    // create new entry to the users table
-    // create new entry for all of his playlists
-    // create new entry for the scheduled snapshot
-  // send the userid cookie back to client
-  // send userdata to store in session storage
-  // store the userid in localstorage with given session length
-  // resp.headers.set("Set-Cookie", `${strCookies}; SameSite=Strict; Max-Age=${604800}`);
 }
 
 export async function retriveUserData(ip: string, tokens: Tokens)

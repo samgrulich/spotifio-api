@@ -1,4 +1,5 @@
-import { Users, UserInput, Schedule } from "../../modules/db/tables.ts";
+import { Users, UserInput, Schedule, Snapshots } from "../../modules/db/tables.ts";
+import { initializeUserSnapshots, snapshotUserPlaylists } from "../versions/snapshots.ts";
 
 
 export interface AuthOutput
@@ -12,10 +13,12 @@ export function generateToken(): string
   return token;
 }
 
-export function createUser(table: Users, schedule: Schedule, userData: UserInput)
+export async function createUser(users: Users, snapshots: Snapshots, schedule: Schedule, userData: UserInput)
 {
   schedule.pushPlaylists({ids: [userData.id]});
-  table.insert(userData);
+
+  const playlists = await initializeUserSnapshots(snapshots, userData);
+  users.insert({userData, playlists});
 }
 
 export function loginUser(table: Users, userData: UserInput)

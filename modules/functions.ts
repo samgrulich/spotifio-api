@@ -1,4 +1,4 @@
-import { Context } from "oak";
+import { Context, Status } from "oak";
 import { crypto } from "crypto"; 
 import { DigestAlgorithm } from "./deps.ts";
 import { IChunk } from "./db/types.ts";
@@ -32,6 +32,11 @@ export function respondError(ctxt: Context, msg: string, reason: string, status=
   })
 }
 
+export function respondNotLogged(ctxt: Context)
+{
+  respondError(ctxt, "Authentication failed", "not_logged", Status.Forbidden);
+}
+
 export function stripServerHeaders(ctxt: Context)
 {
   const headers = Array.from(ctxt.response.headers.keys());
@@ -51,17 +56,17 @@ export function respond(ctxt: Context, options: {data?: any, cookies?: any, stat
 export function digest(data: any, algorithm: DigestAlgorithm = "SHA-1"): string
 {
   const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
   const text = JSON.stringify(data);
   
-  const encoded = encoder.encode(text);
-  const hashed = crypto.subtle.digestSync(algorithm, encoded);
+  const encodedText = encoder.encode(text);
+  const hashBuffer = crypto.subtle.digestSync(algorithm, encodedText);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
 
-  const hashedText = decoder.decode(hashed);
-  return hashedText;
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return hashHex;
 }
 
 export function hashChunks(input: {chunks: Array<IChunk>, date: Date})
 {
-  return digest(input);
+  return digest(input, "SHA-1");
 }

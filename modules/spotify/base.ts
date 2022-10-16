@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { connectionError, Exception } from "../errors.ts";
-import { API_URL, API_AUTH } from "./consts.ts";
+import { API_URL, API_AUTH, ACC_API_URL } from "./consts.ts";
 import { spotifyError } from "./errors.ts";
 
 const HEADERS = {
@@ -36,32 +36,24 @@ export async function get(url: string | URL, headers: Record<string, string>=HEA
   return data; 
 }
 
-export async function post(url: string | URL, data: Record<string, string>, headers: Record<string, string>=HEADERS)
+export async function post(url: string | URL, data: Record<string, string>, headers: Record<string, string>=HEADERS, isAuthTransaction=false)
 {
   // no error handling
-  const resp = await fetch(new URL(url, API_URL), {
+  const api_url = isAuthTransaction ? ACC_API_URL : API_URL;
+
+  const res = await fetch(new URL(url, api_url), {
     method: "POST",
     cache: "no-cache",
     headers: headers,
     body: new URLSearchParams(data),
-  }) 
-    .then(async (response) => {
-      const data = await response.json(); 
+  });
+  
+  const resData = await res.json();
+  
+  if (resData["error"])
+    throw spotifyError(resData["error"]);
 
-      if (data["error"])
-        throw data;
-
-      return data;
-    })
-    .catch((err) => {
-      if(err["error"])
-        throw spotifyError(err["error"]);
-
-      console.log(err);
-      throw connectionError(err);
-    });
-
-  return resp; 
+  return resData; 
 }
 
 export async function getAll<T = any>(url: string | URL, headers?: Record<string, string>): Promise<Array<T>>
@@ -112,50 +104,48 @@ export class Tokens
     return (this.#timeStamp + this.#timeToLive) - Date.now() / 1000;
   }
 
-  get accessToken()
+  async getAccessToken()
   {
     if (0 < this.timeToLive)
       return this.#accessToken;
       
-    const resp = post('refresh', {refresh_token: this.refreshToken});
-    resp.then((data) => {
-      this.#accessToken = data["access_token"];
-      this.#timeToLive = Number(data["expires_in"]);
-      this.#timeStamp = Date.now() / 1000;
-      
-      return this.#accessToken;
-    }).catch((err) => {
-      console.log(err);
-      throw new Exception(403, "invalid_token", [err]);
-    });
-
-    // authenticate user or return not logged in page
-    return undefined;
+    const data = await post("token", {grant_type: "refresh_token", refresh_token: this.refreshToken}, HEADERS, true);
+    
+    this.#accessToken = data["access_token"];
+    this.#timeToLive = Number(data["expires_in"]);
+    this.#timeStamp = Date.now() / 1000;
+    
+    return this.#accessToken;
   }
 
-  protected get authHeaders()
+  protected async getAuthHeaders()
   {
+    const accessToken = await this.getAccessToken();
+    
     return {
-      "Authorization": `Bearer ${this.accessToken}`,
+      "Authorization": `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     }
   }
 
   async get(endpoint: string)
   {
-    const data = await get(endpoint, this.authHeaders); 
+    const authHeaders = await this.getAuthHeaders();
+    const data = await get(endpoint, authHeaders); 
     return data;
   }
 
   async post(endpoint: string, inputData: Record<string, any>={})
   {
-    const data = await post(endpoint, inputData, this.authHeaders);
+    const authHeaders = await this.getAuthHeaders();
+    const data = await post(endpoint, inputData, authHeaders);
     return data;
   }
 
   async getAll<T=any>(endpoint: string | URL)
   {
-    const data = await getAll<T>(endpoint, this.authHeaders);
+    const authHeaders = await this.getAuthHeaders();
+    const data = await getAll<T>(endpoint, authHeaders);
     return data;
   }
 }

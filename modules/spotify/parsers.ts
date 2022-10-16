@@ -75,12 +75,12 @@ export function parseArtists(query: Record<string, any>, isLong=false): Array<IA
 
 export function parseTrack(query: Record<string, any>, isLong=false): ITrack | string
 {
-  const album = parseAlbum(query["album"], false);
-  const artists = parseArtists(query["artists"], false);
+  const album = isLong ? parseAlbum(query["album"], false) : {};
+  const artists = isLong ? parseArtists(query["artists"], false) : {};
 
   const data = {...query, album, artists};
 
-  return convertObject(data, isLong);
+  return isLong ? data : query.id;
 }
 
 export function parseDatedTrack(query: Record<string, any>, isLong=false): ITrack | string
@@ -88,9 +88,10 @@ export function parseDatedTrack(query: Record<string, any>, isLong=false): ITrac
   return parseTrack(query["track"], isLong);
 }
 
-export function parseTracks(query: Record<string, any>, isLong=false): Array<ITrack | string>
+export function parseTracks(query: Record<string, any>, isDated=false, isLong=false): Array<ITrack | string>
 {
-  return query.map((rawTrack: Record<string, any>) => parseTrack(rawTrack, isLong));
+  const parser = isDated ? parseDatedTrack : parseTrack;
+  return query.map((rawTrack: Record<string, any>) => parser(rawTrack, isLong));
 }
 
 export function parseAlbum(query: Record<string, any>, isLong=false): IAlbum | IAlbumShort
@@ -117,10 +118,10 @@ export async function retriveTracks(url: string | URL, tokens?: Tokens, isLong=t
   return []
 }
 
-export async function parsePlaylist(query: Record<string, any>, tokens?: Tokens, isLong=false, longTracks=false): Promise<IPlaylist | IPlaylistShort>
+export async function parsePlaylist(query: Record<string, any>, tokens?: Tokens, isLong=false, longTracks=false): Promise<IPlaylist>
 {
-  const tracksUrl = new URL(query["tracks"]["href"])
-  const tracks = await retriveTracks(tracksUrl, tokens, longTracks);
+  const tracksUrl = new URL(query["tracks"]["href"]);
+  const tracks = isLong ? await retriveTracks(tracksUrl, tokens, longTracks) : [];
 
   const data = {
     ...query,
@@ -129,7 +130,8 @@ export async function parsePlaylist(query: Record<string, any>, tokens?: Tokens,
     tracks
   }
 
-  return convertObject(data);
+  // return convertObject(data);
+  return data as unknown as IPlaylist;
 }
 
 export function parseUser(query: Record<string, any>, refreshToken: string, ip: string, token: string): UserInput

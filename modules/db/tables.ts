@@ -31,12 +31,12 @@ export class Users extends Table
     const params = {
       TableName: this.name,
       Key: {
-        primaryKey: query.id,
+        id: query.id,
       }
     }
 
     const data = await super.getCmd(params);
-    const user = data?.data as IUser;
+    const user = data as IUser;
     return user;
   }
 
@@ -106,20 +106,21 @@ export class Users extends Table
   }
 
      
-  async insert(query: UserInput) 
+  async insert(query: {userData: UserInput, playlists: Array<IPlaylistShort>}) 
   {
-    const authPair: Record<string, string> = {[query.ip]: query.token};
+    const userData = query.userData;
+    const authPair: Record<string, string> = {[userData.ip]: userData.token};
 
     const user: IUser = {
-      id: query.id,
-      name: query.name, 
-      refreshToken: query.refreshToken,
+      id: userData.id,
+      name: userData.name, 
+      refreshToken: userData.refreshToken,
       ips: authPair,
-      playlists: query.playlists.map(playlist => ({id: playlist.id, lastSnap: Object.keys(playlist.snaps).at(-1) ?? "0"} as IPlaylistShort)),
+      playlists: query.playlists,
       // likes: query.liked,
       superLikes: [],
-      cover: query.cover,
-      contact: {email: query.email, prefered: "email"}
+      cover: userData.cover,
+      contact: {email: userData.email, prefered: "email"}
     }
 
     const params = {
@@ -296,14 +297,47 @@ export class Snapshots extends Table
     return chunk;
   }
 
+  protected parseChunk(chunk: IChunk)
+  {
+    const origin = chunk.origin ? { origin: chunk.origin } : {}
+    const data = !chunk.data ? {} : {
+      data: {
+        hash: chunk.data.hash,
+        length: chunk.data.length,
+        tracks: chunk.data.tracks
+      }
+    }
+
+    const chunkGeneric = {
+      ...chunk,
+      ...data,
+      ...origin
+    };
+    return chunkGeneric;
+  }
+
   async insert(query: Snapshot) {
-    // parse pointers
     const params: PutCommandInput = {
       TableName: this.name,
-      Item: query
+      Item: {
+        userId: query.userId,
+        hash: query.hash,
+        chunks: {
+          ...query.chunks,
+          chunks: Object.fromEntries(Object.entries(query.chunks.chunks).map(([key, val]) => [key, this.parseChunk(val)])),
+          removed: query.chunks.removed.map(chunk => this.parseChunk(chunk))
+        }, 
+        color: query.color.toString(),
+        cover: query.cover.map(cover => cover as Record<string, any>),
+        creationDate: query.creationDate.toISOString(),
+        description: query.description,
+        name: query.name,
+        previousSnap: query.previousSnap,
+        public: query.public
+      }
     }
     
-    const _data = await super.putCmd(params);
+    const _data = await this.putCmd(params);
   }
 }
 

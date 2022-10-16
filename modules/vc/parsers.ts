@@ -112,8 +112,8 @@ export function snapshotFromPlaylist(userId: string, playlist: IPlaylist, tracks
   const snapshotData = previousSnap ? generateContinuing() : generateInitial();
   const snapshot = new Snapshot(snapshotData);
   
-  if (addSnapshotInplace)
-    playlist.snaps[baseData.creationDate.toISOString()] = snapshot as ISnapshotShort; 
+  // if (addSnapshotInplace)
+  //   playlist.snaps[baseData.creationDate.toISOString()] = snapshot as ISnapshotShort; 
 
   return snapshot;
 }
