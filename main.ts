@@ -88,15 +88,18 @@ router
       return;
     }
     
+    // retrive spotify userData
     const {tokens, userData} = await callback(ctxt, uiUrl).then(async (tokens) => {
       const ip = formatIP(ctxt.request.ip);
       const userData = await retriveUserData(ip, tokens);
 
       return {tokens, userData};
     });
-    
-    const userId = ctxt.response.headers.get("X-UserId");
-    if(!userId || userId != userData.id)
+   
+    // query my database for the user
+    const dbUser = await users.get({id: userData.id});
+
+    if(!dbUser)
     {
       // const {playlists, likes} = await retriveAdditionalUserData(tokens);
 
@@ -118,7 +121,7 @@ router
     }
 
     const responseData = {
-      id: userId,
+      id: dbUser.id,
       token: userData.token,
       // spotifyToken: tokens.refreshToken,
     }

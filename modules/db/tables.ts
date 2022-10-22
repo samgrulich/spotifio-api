@@ -47,10 +47,10 @@ export class Users extends Table
       Key: {
         id: query.userId,
       },
-      ProjectionExpression: "ips.#ip",
       ExpressionAttributeNames: {
         "#ip": query.ip
-      }
+      },
+      ProjectionExpression: "ips.#ip",
     }
 
     const data = await this.getCmd(params);
@@ -138,12 +138,16 @@ export class Users extends Table
     const params: UpdateCommandInput = {
       TableName: this.name,
       Key: {
-        primaryKey: query.userId,
+        id: query.userId,
       },
-      UpdateExpression: `SET ips.${query.ip}=:t`,
+      ExpressionAttributeNames: {
+        "#ip": query.ip,
+      },
       ExpressionAttributeValues: {
         ":t": query.token
-      }
+      },
+      UpdateExpression: "SET ips.#ip=:t",
+      ReturnValues: "ALL_NEW"
     }
 
     const _data = await this.updateCmd(params);
@@ -234,21 +238,18 @@ export class Snapshots extends Table
 
   async getDate(query: {userId: string, date: Date}): Promise<Array<ISnapshot>>
   {
-    const startDate = query.date;
+    const startDate = new Date(query.date);
     startDate.setDate(query.date.getDate() - 73);
 
     const params: QueryCommandInput = {
       TableName: this.name,
-      ExpressionAttributeNames: {
-        "#pKey": "userId",
-        "#sKey": "creationDate" 
-      },
+      IndexName: "date-index",
       ExpressionAttributeValues: {
         ":userId": query.userId,
-        ":startDate": startDate,
-        ":endDate": query.date,
+        ":startDate": startDate.toISOString(),
+        ":endDate": query.date.toISOString(),
       },
-      KeyConditionExpression: "#pKey = :userId AND #sKey BETWEEN :startDate AND :endDate",
+      KeyConditionExpression: "userId = :userId AND creationDate BETWEEN :startDate AND :endDate",
     }
 
     const data = await this.queryCmd(params);
@@ -329,7 +330,7 @@ export class Snapshots extends Table
         }, 
         color: query.color.toString(),
         cover: query.cover.map(cover => cover as Record<string, any>),
-        creationDate: query.creationDate.toISOString(),
+        creationDate: query.creationDate.toISOString().split("T")[0],
         description: query.description,
         name: query.name,
         previousSnap: query.previousSnap,
