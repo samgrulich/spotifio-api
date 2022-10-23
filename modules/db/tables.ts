@@ -226,7 +226,7 @@ export class Snapshots extends Table
         userId: query.userId,
         hash: query.snapId
       },
-      ProjectionExpression: "name, previousSnap, description, color, creationDate, cover"
+      ProjectionExpression: "chunks.lastChunk, description, color, creationDate, cover"
     };
 
     const data = await this.getCmd(params);
@@ -271,7 +271,10 @@ export class Snapshots extends Table
         userId: query.userId,
         hash: query.snapId,
       },
-      ProjectionExpression: `chunks.chunks[${query.chunkId}]`,
+      ExpressionAttributeNames: {
+        "#id": query.chunkId,
+      },
+      ProjectionExpression: "chunks.chunks.#id",
     }
 
     const data = await this.getCmd(params);
@@ -280,8 +283,8 @@ export class Snapshots extends Table
       throw invalid("chunk");
 
     // request additional data if pointer
-    const chunk: IChunk = data?.data;
-    if (!(chunk.isPointer && parsePointer))
+    const chunk: IChunk = data.chunks.chunks[query.chunkId];
+    if (chunk.isPointer && parsePointer)
     {
       if (!chunk.origin)
         throw invalid("pointer");

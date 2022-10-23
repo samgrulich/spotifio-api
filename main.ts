@@ -194,14 +194,18 @@ secureRouter
     const date = new Date(ctxt.params.date) || new Date();
     const userId = ctxt.response.headers.get("X-UserId") ?? "";
    
-    const snapshot = await snaphots.getDate({userId, date});
-
-    respond(ctxt, {data: snapshot});
+    await snaphots.getDate({userId, date})
+    .then(snap => {
+      respond(ctxt, {data: snap, status: 200});
+    })
+    .catch(err => {
+      respond(ctxt, {data: err, status: 206});
+    });
   })
   .get("/versions/snapshots/detail/:snapId", async (ctxt) => {
     const snapId = ctxt.params.snapId; 
     const userId = ctxt.response.headers.get("X-UserId") ?? "";
-   
+    
     const snapshot = await snaphots.getDetails({userId, snapId});
 
     respond(ctxt, {data: snapshot});
