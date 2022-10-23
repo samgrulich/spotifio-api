@@ -17,6 +17,7 @@ export interface UserInput
   playlists: Array<IPlaylist>;
   liked: Array<string>;
   cover: Array<Image>;
+  country: string;
 }
 
 export class Users extends Table
@@ -102,7 +103,31 @@ export class Users extends Table
     if (!data)
       throw invalid("user");
     
-    return Promise.resolve(data?.data);
+    return Promise.resolve(data);
+  }
+
+  async getAttribute(query: {userId: string, attributes: string})
+  {
+    checkObject(query);
+
+    const params: GetCommandInput = {
+      TableName: this.name,
+      Key: {
+        id: query.userId,
+      },
+      ProjectionExpression: query.attributes,
+    }
+
+    const data = await this.getCmd(params)
+      .catch((err) => {
+        console.log(err);
+        throw invalid("attribute(s)");
+      });
+    
+    if (!data)
+      throw invalid("user");
+    
+    return Promise.resolve(data);
   }
 
      
@@ -120,6 +145,7 @@ export class Users extends Table
       // likes: query.liked,
       superLikes: [],
       cover: userData.cover,
+      country: userData.country,
       contact: {email: userData.email, prefered: "email"}
     }
 

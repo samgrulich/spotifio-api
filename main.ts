@@ -14,6 +14,7 @@ import { formatIP, respond, respondError, respondNotLogged, stripServerHeaders }
 import {connect, callback, retriveUserData} from "./routes/auth/spotify.ts";
 import { IChunk, IUser } from "./modules/db/types.ts";
 import { Exception } from "./modules/errors.ts";
+import { getTracks } from "./routes/versions/chunk.ts";
 
 
 const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
@@ -112,6 +113,7 @@ router
       const responseData = {
         id: user.id,
         token: user.token,
+        country: user.country,
         // spotifyToken: tokens.refreshToken,
       }
 
@@ -123,6 +125,7 @@ router
     const responseData = {
       id: dbUser.id,
       token: userData.token,
+      country: userData.country,
       // spotifyToken: tokens.refreshToken,
     }
 
@@ -187,8 +190,11 @@ secureRouter
     const { snapId, chunkId } = ctxt.params; 
 
     const chunk: IChunk = await snaphots.getChunk({userId, snapId, chunkId}, true);
+    const userAtts = await users.getAttribute({userId, attributes: "refreshToken, country"});
 
-    respond(ctxt, {data: chunk});
+    const tracks = await getTracks(userAtts["refreshToken"], userAtts["country"], chunk.data?.tracks ?? []);
+
+    respond(ctxt, {data: {chunk, tracks}});
   })
   .get("/versions/snapshots/:date", async (ctxt) => {
     const date = new Date(ctxt.params.date) || new Date();

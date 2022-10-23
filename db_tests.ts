@@ -19,3 +19,5 @@ const query = {
 // console.log("done");
 
 // const snapshot = snapshots.getDate({userId: query.userId, date: query.date})
+const token = await users.getSpotifyToken({userId: query.userId, token: "eb0b9e37-eb06-4dd4-be53-2101c767dcb6"})
+console.log(token);

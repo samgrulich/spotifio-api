@@ -135,6 +135,23 @@ export class Tokens
     return data;
   }
 
+  async getMultiple(endpoint: string, options?: {params?: Record<string,string>, list?: Record<string, Array<string>>})
+  {
+    if (!options)
+      return;
+
+    const singleParams = new URLSearchParams(options.params);
+    const listParamsArr = Object.entries(options.list ?? {}).map(([key, val]) => encodeURIComponent(key) + "=" + encodeURIComponent(val.toString()));
+    const listParamsStr = listParamsArr.reduce((prev, curr) => prev + "&" + curr); 
+    
+    const paramsString = options.params ? singleParams.toString() + "&" + listParamsStr : listParamsStr;
+  
+    const authHeaders = await this.getAuthHeaders();
+    const data = await get(`${endpoint}?${paramsString}`, authHeaders); 
+  
+    return data;
+  }
+
   async post(endpoint: string, inputData: Record<string, any>={})
   {
     const authHeaders = await this.getAuthHeaders();

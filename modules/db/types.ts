@@ -27,6 +27,7 @@ export interface IUser
   // likes: Array<string>;
   superLikes: Array<string>;
   cover: Array<Image>;
+  country: string;
   contact: { email: string, telephone?: string, messenger?: string, prefered: string};
   // creationDate: Date;
   // billing info
@@ -138,4 +139,5 @@ export interface ITrack
   album: IAlbumShort;
   artists: Array<IArtistShort>;
   cover: Array<Image>;
+  preview_url: string;
 }

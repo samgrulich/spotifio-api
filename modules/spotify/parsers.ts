@@ -73,25 +73,27 @@ export function parseArtists(query: Record<string, any>, isLong=false): Array<IA
   return query.map((rawArtist: Record<string, any>) => parseArtist(rawArtist, isLong));
 }
 
-export function parseTrack(query: Record<string, any>, isLong=false): ITrack | string
+export function parseTrack(query: Record<string, any>, desiredItems=["id"]): ITrack | string | Record<string, string>
 {
-  const album = isLong ? parseAlbum(query["album"], false) : {};
-  const artists = isLong ? parseArtists(query["artists"], false) : {};
+  // const album = isLong ? parseAlbum(query["album"], false) : {};
+  // const artists = isLong ? parseArtists(query["artists"], false) : {};
 
-  const data = {...query, album, artists};
+  const data = query as ITrack;
+  data.cover = data.cover ? data.cover : query.album.images;
+  const result = Object.fromEntries(Object.entries(data).filter(([key, _]) => desiredItems.includes(key)));
 
-  return isLong ? data : query.id;
+  return result;
 }
 
-export function parseDatedTrack(query: Record<string, any>, isLong=false): ITrack | string
+export function parseDatedTrack(query: Record<string, any>, desiredItems=["id"]): ITrack | string | Record<string, string>
 {
-  return parseTrack(query["track"], isLong);
+  return parseTrack(query["track"], desiredItems);
 }
 
-export function parseTracks(query: Record<string, any>, isDated=false, isLong=false): Array<ITrack | string>
+export function parseTracks(query: Record<string, any>, isDated=false, desiredItems=["id"]): Array<ITrack | string | Record<string, string>>
 {
   const parser = isDated ? parseDatedTrack : parseTrack;
-  return query.map((rawTrack: Record<string, any>) => parser(rawTrack, isLong));
+  return query.map((rawTrack: Record<string, any>) => parser(rawTrack, desiredItems));
 }
 
 export function parseAlbum(query: Record<string, any>, isLong=false): IAlbum | IAlbumShort
@@ -146,6 +148,7 @@ export function parseUser(query: Record<string, any>, refreshToken: string, ip: 
     cover: query["images"],
     playlists: [],
     liked: [],
+    country: query["country"],
   }
 
   return user;
