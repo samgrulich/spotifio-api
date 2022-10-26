@@ -15,6 +15,8 @@ import {connect, callback, retriveUserData} from "./routes/auth/spotify.ts";
 import { IChunk, IUser } from "./modules/db/types.ts";
 import { Exception } from "./modules/errors.ts";
 import { getTracks } from "./routes/versions/chunk.ts";
+import { Tokens } from "./modules/spotify/base.ts";
+import { parseUser } from "./modules/spotify/parsers.ts";
 
 
 const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
@@ -181,6 +183,15 @@ secureRouter
     }
 
     const userData: IUser = await users.get({id: userId});
+
+    // request cover
+    const tokens = new Tokens({refreshToken: userData.refreshToken});
+    const spotifyUserData = await tokens.get("me");
+    const cover = spotifyUserData["images"];
+
+    // set userData cover to the updated pic
+    userData.cover = cover;
+
     userData.ips = {};
     userData.refreshToken = "";
     respond(ctxt, {data: userData});
