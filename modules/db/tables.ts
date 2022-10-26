@@ -347,6 +347,7 @@ export class Snapshots extends Table
   }
 
   async insert(query: Snapshot) {
+    console.log(query)
     const params: PutCommandInput = {
       TableName: this.name,
       Item: {

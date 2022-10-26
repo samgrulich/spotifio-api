@@ -2,11 +2,11 @@
 
 // Create the DynamoDB service client module using ES6 syntax.
 import { DynamoDBClient, 
-  ExecuteStatementCommand, ExecuteStatementCommandInput } from "@aws-sdk/client-dynamodb@3.169.0";
+  ExecuteStatementCommand, ExecuteStatementCommandInput } from "@aws-sdk/client-dynamodb";
 
 import { DynamoDBDocumentClient, 
   PutCommand, GetCommand, UpdateCommand, DeleteCommand, BatchGetCommand, QueryCommand,
-  PutCommandInput, GetCommandInput, UpdateCommandInput, DeleteCommandInput, BatchGetCommandInput, QueryCommandInput } from "@aws-sdk/lib-dynamodb@3.169.0";
+  PutCommandInput, GetCommandInput, UpdateCommandInput, DeleteCommandInput, BatchGetCommandInput, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
 import { Exception } from "../errors.ts";
 import { Status } from "http-status";
 
@@ -69,7 +69,6 @@ class DynamoSetup
     const translateConfig = { marshallOptions, unmarshallOptions };
 
     // Create the DynamoDB document client.
-    console.log(this.client, translateConfig)
     const ddbDocClient = DynamoDBDocumentClient.from(this.client, translateConfig);
     return ddbDocClient;
   }

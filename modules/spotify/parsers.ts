@@ -127,6 +127,7 @@ export async function parsePlaylist(query: Record<string, any>, tokens?: Tokens,
 
   const data = {
     ...query,
+    cover: query["images"],
     color: Color.white,
     snaps: [],
     tracks

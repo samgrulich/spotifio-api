@@ -19,7 +19,7 @@ import { Tokens } from "./modules/spotify/base.ts";
 
 
 const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
-
+console.error("x");
 const database = new DynamoDatabase(REGION); 
 const users = new Users(database);
 const schedule = new Schedule(database);
@@ -280,5 +280,5 @@ app
     return404(ctxt);
   });
 
-app.listen({port: 8080});
+app.listen({port: 8000});
 console.log(`HTTP webserver running. Access it at: http://localhost:8080/`);
