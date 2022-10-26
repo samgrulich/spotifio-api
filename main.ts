@@ -11,12 +11,11 @@ import { snapshotUserPlaylists } from "./routes/versions/snapshots.ts";
 import { formatIP, respond, respondError, respondNotLogged, stripServerHeaders } from "./modules/functions.ts";
 
 // import { newUser } from "./routes/auth.ts";
-import {connect, callback, retriveUserData} from "./routes/auth/spotify.ts";
+import { connect, callback, retriveUserData, retriveAdditionalUserData } from "./routes/auth/spotify.ts";
 import { IChunk, IUser } from "./modules/db/types.ts";
 import { Exception } from "./modules/errors.ts";
 import { getTracks } from "./routes/versions/chunk.ts";
 import { Tokens } from "./modules/spotify/base.ts";
-import { parseUser } from "./modules/spotify/parsers.ts";
 
 
 const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
@@ -104,13 +103,13 @@ router
 
     if(!dbUser)
     {
-      // const {playlists, likes} = await retriveAdditionalUserData(tokens);
+      const {playlists, likes} = await retriveAdditionalUserData(tokens);
 
-      // userData.playlists = playlists;
+      userData.playlists = playlists;
       // userData.liked = likes;
 
-      const user = JSON.parse(Deno.readTextFileSync("./userData/user3.json"));
-      // const user = userData;
+      // const user = JSON.parse(Deno.readTextFileSync("./userData/user3.json"));
+      const user = userData;
 
       const responseData = {
         id: user.id,
