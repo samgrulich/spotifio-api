@@ -69,6 +69,7 @@ class DynamoSetup
     const translateConfig = { marshallOptions, unmarshallOptions };
 
     // Create the DynamoDB document client.
+    console.log(this.client, translateConfig)
     const ddbDocClient = DynamoDBDocumentClient.from(this.client, translateConfig);
     return ddbDocClient;
   }
