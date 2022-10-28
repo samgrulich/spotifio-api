@@ -73,7 +73,7 @@ export function parseArtists(query: Record<string, any>, isLong=false): Array<IA
   return query.map((rawArtist: Record<string, any>) => parseArtist(rawArtist, isLong));
 }
 
-export function parseTrack(query: Record<string, any>, desiredItems=["id"]): ITrack | string | Record<string, string>
+export function parseTrack(query: Record<string, any>, desiredItems=["id"]): Record<string, string>
 {
   // const album = isLong ? parseAlbum(query["album"], false) : {};
   // const artists = isLong ? parseArtists(query["artists"], false) : {};
@@ -85,12 +85,12 @@ export function parseTrack(query: Record<string, any>, desiredItems=["id"]): ITr
   return result;
 }
 
-export function parseDatedTrack(query: Record<string, any>, desiredItems=["id"]): ITrack | string | Record<string, string>
+export function parseDatedTrack(query: Record<string, any>, desiredItems=["id"]): Record<string, string>
 {
   return parseTrack(query["track"], desiredItems);
 }
 
-export function parseTracks(query: Record<string, any>, isDated=false, desiredItems=["id"]): Array<ITrack | string | Record<string, string>>
+export function parseTracks(query: Record<string, any>, isDated=false, desiredItems=["id"]): Array<Record<string, string>>
 {
   const parser = isDated ? parseDatedTrack : parseTrack;
   return query.map((rawTrack: Record<string, any>) => parser(rawTrack, desiredItems));
@@ -108,13 +108,13 @@ export function parseAlbum(query: Record<string, any>, isLong=false): IAlbum | I
   return convertObject(data, isLong);
 }
 
-export async function retriveTracks(url: string | URL, tokens?: Tokens, isLong=true): Promise<Array<ITrack>>
+export async function retriveTracks(url: string | URL, tokens?: Tokens, isLong=true): Promise<Array<Record<string, any>>>
 {
   if(tokens)
   {
     const rawTracks = await tokens.getAll(url);
     const tracks = rawTracks.map(rawTrack => rawTrack["track"])
-    return parseTracks(tracks, isLong) as Array<ITrack>;
+    return parseTracks(tracks, isLong) as Array<Record<string, any>>;
   }
 
   return []

@@ -244,7 +244,7 @@ app
     
     const userId = headers.get("UserId") || "";
     const token = headers.get("Token") || "";
-    const ip = formatIP(ctxt.request.ip);
+    const ip = formatIP(headers.get("UserIp") || "");
     
     logged = await users.validateToken({userId, ip, token})
       .then((data) => {
@@ -280,5 +280,5 @@ app
     return404(ctxt);
   });
 
-app.listen({port: 8000});
+app.listen({port: 8080});
 console.log(`HTTP webserver running. Access it at: http://localhost:8080/`);

@@ -16,7 +16,7 @@ export async function initializeUserSnapshots(snapshots: Snapshots, userData: Us
 
   const promises = userData.playlists.map(async playlist => {
     const tracksRaw = await tokens.getAll(`playlists/${playlist.id}/tracks`);
-    const tracks = parseTracks(tracksRaw, true) as Array<string>;
+    const tracks = parseTracks(tracksRaw, true).map(track => track["id"]) as Array<string>;
     const snap = snapshotFromPlaylist(userData.id, playlist, tracks);
 
     snapshots.insert(snap);
@@ -32,7 +32,7 @@ export function snapshotUserPlaylists(users: Users, snapshots: Snapshots, user: 
   const tokens = new Tokens({refreshToken: user.refreshToken});
   user.playlists.forEach(async playlistShort => {
     const tracksRaw = await tokens.getAll(`playlists/${playlistShort.id}/tracks`);
-    const tracks = parseTracks(tracksRaw, true) as Array<string>;
+    const tracks = parseTracks(tracksRaw, true).map(track => track["id"]) as Array<string>;
 
     // query previous snap
     const previousSnapId = playlistShort.lastSnap;

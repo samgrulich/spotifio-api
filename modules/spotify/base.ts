@@ -11,7 +11,7 @@ const HEADERS = {
 export async function get(url: string | URL, headers: Record<string, string>=HEADERS)
 {
   // no error handling
-  // console.log(url, headers);
+  console.log("requesting spotify: ", url, headers);
   const data = await fetch(new URL(url, API_URL), {
     method: "GET",
     cache: "no-cache",
@@ -148,7 +148,7 @@ export class Tokens
   
     const authHeaders = await this.getAuthHeaders();
     const data = await get(`${endpoint}?${paramsString}`, authHeaders); 
-  
+
     return data;
   }
 
