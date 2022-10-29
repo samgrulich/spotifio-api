@@ -5,6 +5,7 @@ import { GetCommandInput, UpdateCommandInput, PutCommandInput, QueryCommandInput
 // deno-lint-ignore no-unused-vars
 import { noIP, noToken, noUser, invalidIP, invalidToken, invalid, missing, checkObject } from "./errors.ts";
 import { Snapshot } from "../vc/types.ts";
+import { Exception } from "../errors.ts";
 
 export interface UserInput
 {
@@ -58,8 +59,14 @@ export class Users extends Table
     
     if (!data)
       throw invalid("user");
+    else if (!data.ips)
+      throw invalid("token-retrived_data");
     
-    return Promise.resolve(data?.ips[query.ip]);
+    const dbToken = data.ips[query.ip];
+    if (!dbToken)
+      throw new Exception(404, "token-bad_ip", [query.ip]);
+   
+    return dbToken;
   }
 
   validateToken(query: {userId: string, ip: string, token: string})
@@ -161,6 +168,8 @@ export class Users extends Table
 
   async insertToken(query: {userId: string, ip: string, token: string})
   {
+    console.log("adding token (", query, ")") 
+    
     const params: UpdateCommandInput = {
       TableName: this.name,
       Key: {
@@ -173,7 +182,6 @@ export class Users extends Table
         ":t": query.token
       },
       UpdateExpression: "SET ips.#ip=:t",
-      ReturnValues: "ALL_NEW"
     }
 
     const _data = await this.updateCmd(params);

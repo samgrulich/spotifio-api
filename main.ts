@@ -92,7 +92,7 @@ router
     
     // retrive spotify userData
     const {tokens, userData} = await callback(ctxt, uiUrl).then(async (tokens) => {
-      const ip = formatIP(ctxt.request.ip);
+      const ip = formatIP(ctxt.request.headers.get("UserIp") ?? "");
       const userData = await retriveUserData(ip, tokens);
 
       return {tokens, userData};
@@ -245,6 +245,8 @@ app
     const userId = headers.get("UserId") || "";
     const token = headers.get("Token") || "";
     const ip = formatIP(headers.get("UserIp") || "");
+
+    console.log(ip);
     
     logged = await users.validateToken({userId, ip, token})
       .then((data) => {
