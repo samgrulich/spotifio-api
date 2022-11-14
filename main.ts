@@ -139,20 +139,37 @@ router
 
     schedule.pushPlaylists({ids});
   })
-  .post("/versions/snapshots", async (ctxt) => {
-    const data = await parseJson(ctxt);
-    const ids: Array<string> = data["ids"];
+  .post("/versions/snapshots/today", async (ctxt) => {
+    // request index from db
+    const today = await schedule.today;
 
-    if (!ids)
+    if (!today)
     {
-      respondError(ctxt, "No ids provided", "emptyData")
+      respond(ctxt, {status: 201, data:{msg: `Couldn't find ${schedule.todayIndex} in DB`}});
       return;
     }
 
+    const ids: Array<string> = (today ?? {})["ids"];
+
+    // validate request
+    if (!ids)
+    {
+      respond(ctxt, {status: 201, data: {msg: `No ids found today (${schedule.todayIndex})`}})
+      return;
+    }
+
+    const lastUpdate = today["lastUpdate"];
+    if (lastUpdate >= Date.now() + 85_680_000)
+      respond(ctxt, {status: 203, data: {msg: "update already done for today"}});
+
+    // snapshot playlists
     ids.forEach(async id => {
       const user = await users.get({id});
       snapshotUserPlaylists(users, snaphots, user);  
     });
+
+    // append updated last update to today
+    schedule.setLastUpdate(Date.now());
   });
 
 const secureRouter = new Router();

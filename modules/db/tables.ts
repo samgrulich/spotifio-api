@@ -382,17 +382,17 @@ export class Snapshots extends Table
 
 export class Schedule extends Table
 {
-  dayCount = 73; // how much days the DB stores
+  dayCount = 61; // how much days the DB stores
 
   constructor(database: DynamoDatabase)
   {
     super("Schedule", database);
   }
 
-  async init()
+  init()
   {
     const days = Array.from(Array(this.dayCount).keys());
-    await days.forEach(async (day) => {
+    days.forEach(async (day) => {
       const params: PutCommandInput = {
         TableName: this.name,
         Item: {
@@ -439,11 +439,41 @@ export class Schedule extends Table
     const params: GetCommandInput = {
       TableName: this.name,
       Key: {
-        id: this.todayIndex,
+        index: this.todayIndex,
       }
     };
 
     const data = this.getCmd(params);
     return data;
+  }
+
+  get lastUpdate()
+  {
+    const params: GetCommandInput = {
+      TableName: this.name,
+      Key: {
+        index: -1,
+      }
+    };
+
+    const data = this.getCmd(params);
+    return data;
+  }
+
+  setLastUpdate(timeStamp?: number)
+  {
+    const time = timeStamp ?? Date.now();
+    const params: UpdateCommandInput = {
+      TableName: this.name,
+      Key: {
+        index: -1,
+      },
+      ExpressionAttributeValues: { 
+        ":t": time 
+      },
+      UpdateExpression: "SET lastUpdate=:t"
+    }
+
+    this.updateCmd(params);
   }
 }

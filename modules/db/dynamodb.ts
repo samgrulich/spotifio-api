@@ -126,22 +126,6 @@ export class Table
     this.database = database;
   }
 
-  get(query: Object): any | Promise<any>
-  {
-  }
-
-  insert(query: Object): any | Promise<any>
-  {
-  }
-
-  update(query: Object): any | Promise<any>
-  {
-  }
-
-  delete(query: Object): any | Promise<any>
-  {
-  }
-
   protected async putCmd(params: PutCommandInput)
   {
     try {
