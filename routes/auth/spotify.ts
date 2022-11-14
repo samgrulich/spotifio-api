@@ -84,15 +84,20 @@ export async function retriveUserData(ip: string, tokens: Tokens)
   return userData;
 }
 
-export async function retriveAdditionalUserData(tokens: Tokens)
+export async function retriveAdditionalUserData(tokens: Tokens, userName: string)
 {
   // get users playlists and likes
   const rawPlaylists = await tokens.getAll("me/playlists");
-  const rawLikes = await tokens.getAll("me/tracks");
+  // const rawLikes = await tokens.getAll("me/tracks");
+
+  // filter only playlists created by user
+  const myPlaylists = rawPlaylists.filter(playlist => playlist["owner"]["display_name"] == userName)
+
 
   // parse spotify data to io(my) data
-  const playlists = await parseMultiple({elements: rawPlaylists, options: [tokens]}, parsePlaylist);
-  const likes = await parseMultiple({elements: rawLikes}, parseDatedTrack);
+  const playlists = await parseMultiple({elements: myPlaylists, options: [tokens]}, parsePlaylist);
+  // const likes = await parseMultiple({elements: rawLikes}, parseDatedTrack);
+  const likes: Array<string> = [];
 
   return {playlists, likes};
 }

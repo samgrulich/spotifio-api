@@ -103,10 +103,10 @@ router
 
     if(!dbUser)
     {
-      const {playlists, likes} = await retriveAdditionalUserData(tokens);
+      const {playlists, likes} = await retriveAdditionalUserData(tokens, userData.name);
 
       userData.playlists = playlists;
-      // userData.liked = likes;
+      userData.liked = likes;
 
       // const user = JSON.parse(Deno.readTextFileSync("./userData/user3.json"));
       const user = userData;
