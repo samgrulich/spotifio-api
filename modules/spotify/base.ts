@@ -1,4 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
+import { isInstantiated } from "https://deno.land/std@0.156.0/crypto/_wasm_crypto/lib/deno_std_wasm_crypto.generated.mjs";
 import { connectionError, Exception } from "../errors.ts";
 import { API_URL, API_AUTH, ACC_API_URL } from "./consts.ts";
 import { spotifyError } from "./errors.ts";
@@ -18,6 +19,9 @@ export async function get(url: string | URL, headers: Record<string, string>=HEA
     headers: headers,
   })
     .then(async (response) => {
+      if (!response.ok)
+        throw new Exception(response.status, "Spotify", [await response.text()]);
+
       const data = await response.json(); 
 
       if (data["error"])
@@ -28,6 +32,9 @@ export async function get(url: string | URL, headers: Record<string, string>=HEA
     .catch((err) => {
       if(err["error"])
         throw spotifyError(err["error"]);
+
+      if(err instanceof Exception)
+        throw err;
 
       console.log(err);
       throw connectionError(err);

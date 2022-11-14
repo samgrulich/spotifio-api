@@ -19,7 +19,7 @@ import { Tokens } from "./modules/spotify/base.ts";
 
 
 const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
-console.error("x");
+console.log("Starting Spotifio-API,", new Date());
 const database = new DynamoDatabase(REGION); 
 const users = new Users(database);
 const schedule = new Schedule(database);
