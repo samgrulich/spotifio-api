@@ -5,12 +5,9 @@ import { DynamoDatabase } from "./modules/db/dynamodb.ts";
 import { Schedule, Snapshots, Users } from "./modules/db/tables.ts";
 import { createUser, loginUser } from "./routes/auth/base.ts";
 import { snapshotUserPlaylists } from "./routes/versions/snapshots.ts";
-// import { IChunk } from "./modules/db/types.ts";
-// import { IError } from "./modules/errors.ts";
 
-import { formatIP, respond, respondError, respondNotLogged, stripServerHeaders } from "./modules/functions.ts";
+import { formatIP, respond, respond404, respondError, respondNotLogged, stripServerHeaders } from "./modules/functions.ts";
 
-// import { newUser } from "./routes/auth.ts";
 import { connect, callback, retriveUserData, retriveAdditionalUserData } from "./routes/auth/spotify.ts";
 import { IChunk, IUser } from "./modules/db/types.ts";
 import { Exception } from "./modules/errors.ts";
@@ -19,7 +16,7 @@ import { Tokens } from "./modules/spotify/base.ts";
 
 
 const REGION: string = Deno.env.get("REGION") ?? "eu-central-1";
-console.log("Starting Spotifio-API,", new Date());
+console.log("Starting Spotifio-API,", new Date(), REGION);
 const database = new DynamoDatabase(REGION); 
 const users = new Users(database);
 const schedule = new Schedule(database);
@@ -28,12 +25,6 @@ const snaphots = new Snapshots(database);
 const uiUrl = Deno.env.get("UI_URL") ?? "http://localhost:8000";
 const connectURL = connect(uiUrl);
 
-function return404(ctxt: Context)
-{
-  ctxt.response.status = 404;
-  ctxt.response.type = "application/json; charset=utf-8";
-  ctxt.response.body = JSON.stringify({msg: "There's been an error :)"});
-}
 
 async function parseJson(ctxt: Context)
 {
@@ -70,8 +61,7 @@ const errorHandlerMiddleware: Middleware = async(ctxt, next) => {
   }
 }
 
-const router = new Router();
-router
+const router = new Router()
   .get("/", (ctxt) => {
     ctxt.response.body = "hello from api";
   })
@@ -172,8 +162,7 @@ router
     schedule.setLastUpdate(Date.now());
   });
 
-const secureRouter = new Router();
-secureRouter
+const secureRouter = new Router()
   .use(async (ctxt, next) => {
     if (!ctxt.response.headers.has("X-Logged"))
     {
@@ -244,8 +233,7 @@ secureRouter
     respond(ctxt, {data: snapshot});
   });
 
-const app = new Application();
-app
+const app = new Application()
   .use(errorHandlerMiddleware)  
   .use(async (ctxt, next) => {
     // token validation
@@ -296,8 +284,8 @@ app
   .use(secureRouter.routes())
   .use(secureRouter.allowedMethods())
   .use((ctxt) => {
-    return404(ctxt);
+    respond404(ctxt);
   });
 
 app.listen({port: 8080});
-console.log(`HTTP webserver running. Access it at: http://localhost:8080/`);
+// console.log(`HTTP webserver running. Access it at: http://localhost:8080/`);

@@ -53,6 +53,13 @@ export function respond(ctxt: Context, options: {data?: any, cookies?: any, stat
   ctxt.response.body = JSON.stringify(options.data);
 }
 
+export function respond404(ctxt: Context)
+{
+  ctxt.response.status = 404;
+  ctxt.response.type = "application/json; charset=utf-8";
+  ctxt.response.body = JSON.stringify({msg: "There's been an error :)"});
+}
+
 export function digest(data: any, algorithm: DigestAlgorithm = "SHA-1"): string
 {
   const encoder = new TextEncoder();
